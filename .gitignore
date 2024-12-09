@@ -41,7 +41,7 @@ build/
 ### OTHER SHIT
 /database
 config.json
-usermain.html
+/usermain.html
 /images
 artists.json
 /src/test
