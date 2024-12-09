@@ -1,0 +1,7 @@
+<div id="sidebar" class="leftnav">
+            <h3>Pack List</h3>
+            <hr>
+            <ul class="packlist">
+                ${PACKLIST}
+            </ul>
+        </div>

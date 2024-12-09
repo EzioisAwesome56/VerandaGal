@@ -1,0 +1,15 @@
+<div class="imgview-content">
+<h2>Settings page</h2>
+<form action="/setting" method="post">
+	<label for="normal">Show normal rated images:</label>
+	<input type="checkbox" id="normal" name="normal" ${NORM}><br>
+	<label for="spicy">Show spicy rated images:</label>
+	<input type="checkbox" id="spicy" name="spicy" ${SPICE}><br>
+	<label for="extraspicy">Show extra spicy rated images:</label>
+	<input type="checkbox" id="extraspicy" name="extraspicy" ${ESPICE}><br>
+	<label for="ai">Show AI generated images:</label>
+	<input type="checkbox" id="ai" name="ai" ${AI}><br>
+	<input type="submit" value="Save settings">
+</form>
+${STATUS}
+</div>

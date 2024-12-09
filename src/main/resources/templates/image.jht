@@ -1,0 +1,30 @@
+<div class="imgview-content">
+            <div>
+                <img id="selimage" src="/img/${IMGURL}" alt="image" class="fit-width-thirty">
+            </div>
+            Image display options:<br>
+            <a onclick="set_full()" href="#">100% Max Width</a> | <a onclick="set_half()" href="#">50% Max Width</a> | <a onclick="set_thirty()" href="#">30% Max Width</a> | <a href="/img/${IMGURL}" download>Download image</a>
+            <div class="imageinfo">
+                <h2 class="nowhitespace">Image information</h2>
+                <b>File name: </b>${FILENAME}<br>
+                <b>File size (MiB): </b>${FILESIZE}<br>
+                <b>File size (MB): </b>${FILESIZE2}<br>
+                <b>Image Resolution: </b>${IMGRES}<br>
+                <b>Artist: </b>${ARTIST}<br>
+                <b>Original URL: </b>${URL}<br>
+                <b>Image rating: </b>${RATING}<br>
+                <b>Is AI Generated: </b>${ISAI}<br>
+                <b>Gallery upload date: </b>${DATE}<br>
+                <b>From image pack: </b>${PACK}<br>
+                <b>uploader notes: </b>${NOTES}
+            </div>
+            <div class="bottomnav">
+                <table class="center">
+                    <tr>
+                        <td>${PREVLINK}</td>
+                        <td>|</td>
+                        <td>${NEXTLINK}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>

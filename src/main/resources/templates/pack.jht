@@ -1,0 +1,10 @@
+<div class="imgview-content">
+<h2>Image Pack: ${PACKNAME}</h2>
+<div class="imageinfo">
+<b>Image Pack id:</b> ${PACKID}<br>
+<b>Image count:</b> ${PACKNUM}<br>
+<b>Upload Date:</b> ${PACKUPLOAD}<br>
+<b>Pack Description:</b> ${PACKNOTES}<br>
+<a href="${URL}">Click here to browse this image pack</a>
+</div>
+</div>

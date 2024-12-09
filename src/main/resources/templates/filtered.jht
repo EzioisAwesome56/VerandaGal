@@ -1,0 +1,9 @@
+<div class="imgview-content">
+<h1>NOTICE:</h1> Based on your settings, this image has been filtered<br>
+If you wish to view this image, you can add "&o=1" to the url to override your settings this single time<br>
+You may also want to consider changing your view settings instead.<br>
+<hr>
+<h2>Filter information</h2>
+<h3>Image Rating:</h3> ${RATING}<br>
+<h3>Is image made by AI:</h3> ${ISAI}
+</div>

@@ -1,0 +1,5 @@
+<div class="imgview-content">
+<h1>ERROR:</h1> no Artist was found with this ID<br>
+The artist may have been deleted, or something broke<br>
+if you came here from an image, an invalid artist may have been attached to said image
+</div>

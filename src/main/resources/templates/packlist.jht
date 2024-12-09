@@ -1,0 +1,5 @@
+<div class="imgview-content">
+<h1>List of all installed image packs</h1>
+<hr>
+<ul>${LIST}</ul>
+</div>

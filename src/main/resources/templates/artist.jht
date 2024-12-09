@@ -1,0 +1,23 @@
+<div class="imgview-content">
+<h2>Artist: ${ARTNAME}</h2>
+<div class="imageinfo">
+<b>Artist id:</b> ${ARTID}<br>
+<b>Artist URLs:</b><ul>${ARTURLS}</ul><br>
+<b>Notes about this artist:</b> ${ARTNOTES}<br>
+</div>
+<h3 class="nowhitespace" style="text-align: center;">Images by this artist</h3>
+            <table class="galbrowse">
+                <tbody>
+                    ${GALCONTENT}
+                </tbody>
+            </table>
+            <div class="bottomnav">
+                ${FILT_COUNT}
+                <table class="center">
+                    <tr>
+                        <td>Previous page</td>
+                        <td>|</td>
+                        <td>Next Page</td>
+                    </tr>
+                </table>
+</div>

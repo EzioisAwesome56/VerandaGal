@@ -1,0 +1,83 @@
+<div class="imgview-content">
+      <h1>API Built-in documentation</h1>
+      The VerandaGal API is extremely simple.<br>
+      The general flow is send a request to the /api url on the server you are viewing<br>
+      Every endpoint requires the "aid" GET parameter to be set, while only some also require the "oid" GET parameter to be set.<br>
+      All endpoints return a simple json payload
+      <hr>
+      <h2>Image Information Endpoint</h2>
+      <b>Required aid value:</b> 0<br>
+      <b>Requires oid:</b> yes<br>
+      <b>oid value:</b> Image ID you wish to query<br>
+      <b>Response format:</b><br>
+      <ul>
+        <li>
+			<b>"img" json field:</b> json representation of how an image is stored internally. this field has several variables
+            <ul>
+                <li><b>id</b> the image id</li>
+                <li><b>packid</b> the id of the image pack this image belongs to</li>
+                <li><b>artistid</b> the id of the artist who made the image</li>
+                <li><b>rating</b> the rating assigned to the image</li>
+                <li><b>imageres</b> resolution of image, stored as XxY</li>
+                <li><b>uploaddate</b> the date the image was added to the server</li>
+                <li><b>filename</b> the filename of the image as stored on disk</li>
+                <li><b>sourceurl</b> source url of the image. May be blank or unknown if the uploader did not provide one</li>
+                <li><b>uploaderComments</b> any additional notes the uploader included when they added the image</li>
+                <li><b>isAI</b> is the image ai generated</li>
+            </ul>
+        </li>
+        <li>
+			<b>"urls" json field:</b> an array of urls, should only contain two. First one is the url to the actual image, second one is a url to its thumbnail
+		</li>
+	  </ul>
+	  <hr>
+		<h2>Pack List Endpoint</h2>
+		<b>Required aid value:</b> 1<br>
+		<b>Requires oid:</b> no<br>
+		<b>Response format:</b><br>
+		<ul>
+			<li>this endpoint returns a json payload which is just a bunch of json entires. The key is the pack id, while the value is the pack's name</li>
+		</ul>
+	<hr>
+		<h2>Pack Information Endpoint</h2>
+		<b>Required aid value:</b> 2<br>
+		<b>Requires oid:</b> yes<br>
+		<b>oid value:</b> Pack ID you wish to query<br>
+		<b>Response format:</b><br>
+		<ul>
+			<li><b>"pack" json field:</b> json representation of how pack information is stored internally. There are several variables inside of it
+			<ul>
+				<li><b>id</b> the pack id</li>
+				<li><b>name</b> the name of the pack</li>
+				<li><b>description</b> the description of the pack provided by the pack creator</li>
+				<li><b>uploadDate</b> when the pack was added to the server</li>
+				<li><b>totalImages</b> how many images are in the pack</li>
+				<li><b>fsdir</b> mostly used internally, name of the folder the pack images are stored in on the filesystem</li>
+			</ul></li>
+			<li><b>"images" json field:</b> an array with every image id belonging to this pack in it</li>
+		</ul>
+	<hr>
+		<h2>Artist List Endpoint</h2>
+		<b>Required aid value:</b> 3<br>
+		<b>Requires oid:</b> no<br>
+		<b>Response format:</b><br>
+		<ul>
+			<li>this endpoint returns a json payload which is just a bunch of json entires. The key is the artist id, while the value is the artist's name</li>
+		</ul>
+	<hr>
+		<h2>Artist Information Endpoint</h2>
+		<b>Required aid value:</b> 4<br>
+		<b>Requires oid:</b> yes<br>
+		<b>oid value:</b> Artist ID you wish to query<br>
+		<b>Response format:</b><br>
+		<ul>
+			<li><b>"artist" json field:</b> json representation of how an artist is stored internally. There are several variables inside of it
+			<ul>
+				<li><b>id</b> the artist id</li>
+				<li><b>name</b> the name of the artist</li>
+				<li><b>urls</b> an array of every url of which the artist can be found on</li>
+				<li><b>notes</b> notes provided about the artist from the uploader</li>
+			</ul></li>
+			<li><b>"images" json field:</b> an array with every image id belonging to this artist in it</li>
+		</ul>
+</div>

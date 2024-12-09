@@ -1,0 +1,81 @@
+html, body {
+    height: 100%;
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+    background: #e3c08d;
+}
+.container {
+    height: 89%;
+}
+.packlist {
+    list-style-type: none;
+    padding: 0px;
+}
+.leftnav {
+    float: left;
+    width: 10%;
+    height: 100%;
+    overflow-y: scroll;
+    word-wrap: break-word;
+    border-right: 2px solid black;
+}
+.top {
+    border-bottom: 2px solid black;
+    text-align: center;
+    height: 11%;
+    overflow: scroll;
+}
+.item {
+    padding: 2px;
+}
+.content {
+    text-align: center;
+    height: 100%;
+    overflow: scroll;
+}
+.imgview-content {
+    text-align: left;
+    height: 100%;
+    overflow: scroll;
+}
+.galbrowse {
+    margin: auto;
+}
+.bottomnav {
+    text-align: center;
+    margin: auto;
+}
+.center {
+    margin: auto;
+}
+.fit-width {
+    height: auto;
+    max-width: 100%;
+}
+.fit-width-half {
+    height: auto;
+    max-width: 50%;
+}
+.fit-width-thirty {
+    height: auto;
+    max-width: 30%;
+}
+.imageinfo {
+    background: grey;
+    border: 1px solid black;
+    width: 60%;
+    padding: 0px;
+    word-wrap: break-word;
+}
+.nowhitespace {
+    margin: 0px;
+    padding: 0px;
+}
+.hide {
+    display: none;
+}
+.toplink {
+    background: grey;
+    border: 2px solid black;
+}
