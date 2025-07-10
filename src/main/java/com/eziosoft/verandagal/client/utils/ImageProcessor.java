@@ -24,6 +24,12 @@ public class ImageProcessor {
     // such luxaries to have its own logger!
     public static Logger log = LogManager.getLogger("Image Processor");
 
+    /**
+     * used to generate the right sized thumbnails for gallery view of an image
+     * @param buf image to generate a thumnail of
+     * @return byte array of thumbnail
+     * @throws IOException thrown if something down the chain breaks
+     */
     public static byte[] generateThumbnail(BufferedImage buf) throws IOException{
         // get image of buffered image
         Image thumbnail = buf.getScaledInstance(128, 128, BufferedImage.SCALE_FAST);
@@ -32,14 +38,8 @@ public class ImageProcessor {
         Graphics2D tempgfx = temp.createGraphics();
         tempgfx.drawImage(thumbnail, 0, 0, null);
         tempgfx.dispose();
-        // write this data to an output stream
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        ImageIO.write(temp, "jpg", stream);
-        // get byte[] from that
-        byte[] data = stream.toByteArray();
-        // clean up
-        stream.close();
-        return data;
+        // convert to a jpeg with 50% quality
+        return ImageUtils.generateCustomJpeg(temp, 0.50f);
     }
 
     /**
