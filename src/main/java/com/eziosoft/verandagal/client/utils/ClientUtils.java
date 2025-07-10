@@ -155,23 +155,11 @@ public class ClientUtils {
     }
 
     /**
-     * exports all artists in the database to an artists.json file at the provided file object
-     * @param outputfile
+     * broke out of exportArtistsToFile below, because i needed this information for my own usages later
+     * @param maindb provide a connection to the main database here
+     * @return the artists file object
      */
-    public static void exportArtists(File outputfile){
-        // attempt to load the config file
-        File conffile = ConfigUtils.checkForConfig();
-        String readfile;
-        try {
-            readfile = FileUtils.readFileToString(conffile, StandardCharsets.UTF_8);
-        } catch (IOException e){
-            VerandaClient.log.error("Error trying to read config file", e);
-            return;
-        }
-        // then, convert it to a java object
-        ConfigFile config = Main.gson_pretty.fromJson(readfile, ConfigFile.class);
-        // spin up the main DB, we will need it shortly
-        MainDatabase maindb = new MainDatabase(config);
+    public static ImportableArtistsFile exportArtists(MainDatabase maindb){
         // get the count of artists in the database
         long total_artists = maindb.getCountOfRecords(Artist.class);
         if (total_artists < 1){
@@ -206,6 +194,30 @@ public class ClientUtils {
             // we have the thing, put it in the artists file
             file.addArtist(x + 1, tmpent);
         }
+        return file;
+    }
+
+    /**
+     * exports all artists in the database to an artists.json file at the provided file object
+     * @param outputfile
+     */
+    public static void exportArtistsToFile(File outputfile){
+        // attempt to load the config file
+        File conffile = ConfigUtils.checkForConfig();
+        String readfile;
+        try {
+            readfile = FileUtils.readFileToString(conffile, StandardCharsets.UTF_8);
+        } catch (IOException e){
+            VerandaClient.log.error("Error trying to read config file", e);
+            return;
+        }
+        // then, convert it to a java object
+        ConfigFile config = Main.gson_pretty.fromJson(readfile, ConfigFile.class);
+        // spin up the main DB, we will need it shortly
+        MainDatabase maindb = new MainDatabase(config);
+        // export the artists
+        ImportableArtistsFile file = exportArtists(maindb);
+        maindb.close();
         // we're done, output some debug shit
         VerandaClient.log.info("Done reading database. Exported {} artists", file.getArtists().size());
         VerandaClient.log.info("Now saving file to {}", outputfile.getAbsolutePath());
