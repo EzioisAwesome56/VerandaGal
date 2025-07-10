@@ -88,25 +88,13 @@ public class ClientUtils {
     }
 
     /**
-     * used to take a local artists.json file
-     * and import their information into the DB
-     * @param file
+     * this was in importArtists before, but split it out so that it didnt make a seperate db connection and make
+     * memory leaks
+     * @param file artists file to import
+     * @param maindb connection to main database
      */
-    public static void importArtists(ImportableArtistsFile file){
-        // load the config file
-        File conffile = ConfigUtils.checkForConfig();
-        String readfile;
-        try {
-            readfile = FileUtils.readFileToString(conffile, StandardCharsets.UTF_8);
-        } catch (IOException e){
-            Main.LOGGER.error("Error trying to read config file", e);
-            return;
-        }
-        // convert to java object
-        ConfigFile config = Main.gson_pretty.fromJson(readfile, ConfigFile.class);
-        // spin up the main DB
-        MainDatabase maindb = new MainDatabase(config);
-        // first, we need to load
+    public static void importArtistsWithDatabaseConnection(ImportableArtistsFile file, MainDatabase maindb){
+        // lifted from the original importArtists function
         VerandaClient.log.info("now checking mode of artist files");
         if (file.getMode() == 0){
             VerandaClient.log.info("Running in import mode (0)");
@@ -150,6 +138,29 @@ public class ClientUtils {
         } else {
             Main.LOGGER.error("Invalid import mode in artists file: {}", file.getMode());
         }
+    }
+
+    /**
+     * used to take a local artists.json file
+     * and import their information into the DB
+     * @param file
+     */
+    public static void importArtists(ImportableArtistsFile file){
+        // load the config file
+        File conffile = ConfigUtils.checkForConfig();
+        String readfile;
+        try {
+            readfile = FileUtils.readFileToString(conffile, StandardCharsets.UTF_8);
+        } catch (IOException e){
+            Main.LOGGER.error("Error trying to read config file", e);
+            return;
+        }
+        // convert to java object
+        ConfigFile config = Main.gson_pretty.fromJson(readfile, ConfigFile.class);
+        // spin up the main DB
+        MainDatabase maindb = new MainDatabase(config);
+        // this part of the function was moved to another call, run that instead
+        importArtistsWithDatabaseConnection(file, maindb);
         // close the connection
         maindb.close();
     }
