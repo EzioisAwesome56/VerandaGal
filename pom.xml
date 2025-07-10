@@ -78,6 +78,18 @@
             <artifactId>log4j-slf4j2-impl</artifactId>
             <version>2.24.1</version>
         </dependency>
+        <!-- additional image format support via these libraries -->
+        <!-- https://mvnrepository.com/artifact/org.sejda.imageio/webp-imageio -->
+        <dependency>
+            <groupId>org.sejda.imageio</groupId>
+            <artifactId>webp-imageio</artifactId>
+            <version>0.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-psd</artifactId>
+            <version>3.12.0</version>
+        </dependency>
     </dependencies>
 
     <build>
