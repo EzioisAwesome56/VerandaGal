@@ -7,16 +7,21 @@ import com.eziosoft.verandagal.database.MainDatabase;
 import com.eziosoft.verandagal.database.ThumbnailStore;
 import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
+import com.eziosoft.verandagal.database.objects.Thumbnail;
 import com.eziosoft.verandagal.server.utils.ServerUtils;
 import com.eziosoft.verandagal.utils.ConfigFile;
 import com.eziosoft.verandagal.utils.ConfigUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class BulkImageImport {
@@ -86,7 +91,14 @@ public class BulkImageImport {
         log.info("Connecting to main database");
         MainDatabase maindb = new MainDatabase(config);
         // load the artists file
-        ImportableArtistsFile artists = ClientUtils.exportArtists(maindb);
+        ImportableArtistsFile artists;
+        try {
+            artists = ClientUtils.exportArtists(maindb);
+        } catch (NullPointerException e){
+            // we dont actually care if the database is empty, so we will just make a new importable artists file
+            // that is empty
+            artists = new ImportableArtistsFile();
+        }
         // prepare our basic image metadata
         ArrayList<BulkImageObject> bulkobjs = prepareMetadata(supportedfiles, scan, artists);
         // import our artists file for changes
@@ -118,11 +130,78 @@ public class BulkImageImport {
             dbent.setPackid(packid);
             // from bulk image importer
             dbent.setUploaderComments("Uploaded using Bulk Image Importer<br>some information may be missing or inaccurate");
+            dbent.setSourceurl(parseFilenameforOriginalURL(bulk.getFilename(), bulk.getSitesource()));
             // other provided imformation
             dbent.setAI(bulk.isAi());
             dbent.setFilename(bulk.getFilename());
-
+            dbent.setArtistid(bulk.getArtistid());
+            // we have to load the image eventually, so we will do so now
+            File ogsource = new File(srcfolder, bulk.getFilename());
+            // verify it exists
+            if (!ogsource.exists()){
+                log.error("ERROR: somehow, the file {} has gone missing! skipping, this will probably break everything!");
+                continue;
+            }
+            // read it with imageio
+            BufferedImage temp;
+            try {
+                temp = ImageIO.read(ogsource);
+            } catch (IOException e){
+                // what happened?
+                log.error("Something broke while trying to read in file {}, skipping", bulk.getFilename());
+                log.error(e);
+                continue;
+            }
+            // set the resolution
+            dbent.setImageres(temp.getWidth() + "x" + temp.getHeight());
+            // then, we can import this image into the database
+            maindb.SaveObject(dbent);
+            // now we have an imageid!
+            // create a preview for it
+            byte[] previewbytes = null;
+            byte[] thumbnailbytes = null;
+            try {
+                previewbytes = ImageUtils.generateImagePreview(temp);
+                thumbnailbytes = ImageProcessor.generateThumbnail(temp);
+            } catch (IOException e){
+                log.error("Something went wrong during thumbnail/preview gen, this may break things!");
+                log.error(e);
+            }
+            // create a new file, then write the webp to it
+            File preview_file = new File(preview, dbent.getId() + ".webp");
+            try {
+                FileUtils.writeByteArrayToFile(preview_file, previewbytes);
+            } catch (IOException e){
+                log.error("Error while trying to write preview webp file");
+                log.error(e);
+            }
+            // now we have to write the thumbnail into the database
+            Thumbnail thumbnailent = new Thumbnail();
+            // make sure its not null, if it is we have a problem
+            if (thumbnailbytes == null){
+                log.error("Thumbnail bytes are null, filling with dummy bytes. this will break shit!");
+                thumbnailbytes = new byte[]{(byte) 255, (byte) 255};
+            }
+            thumbnailent.setImagedata(thumbnailbytes);
+            // write this to the thumbnail database
+            thumbnail.SaveThumbnail(thumbnailent);
+            if (thumbnailent.getId() != dbent.getId()){
+                log.warn("Thumbnail db id does not match image id in database. something may be wrong");
+            }
+            // now we just need to move the file
+            try {
+                Files.move(ogsource.toPath(), new File(packimgdir, dbent.getFilename()).toPath(), StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException e){
+                log.error("Something went wrong while trying to move a file!");
+                log.error(e);
+            }
+            log.info("Imported image {}", dbent.getFilename());
         }
+        log.info("Done importing images. enjoy!");
+        // clean up some shit
+        thumbnail.close();
+        maindb.close();
+        scan.close();
     }
 
     /**
@@ -449,5 +528,26 @@ public class BulkImageImport {
             // return our new value
         }
         return artid;
+    }
+
+    /**
+     * some sites, namely pixiv, encode enough information in the filename to obtain the original url
+     * this function will obtain said url
+     * @param filename filename to parse for information
+     * @param sitesource what site is this from?
+     * @return original url, "No URL could be parsed" if none could be found
+     */
+    private static String parseFilenameforOriginalURL(String filename, int sitesource){
+        // check to see if the site is supported
+        if (sitesource == 1){
+            log.info("PIXIV url parser now active");
+            // split by _
+            String[] split = filename.split("_");
+            // construct url
+            // return that
+            return "https://www.pixiv.net/artworks/" + split[0];
+        } else {
+            return "No URL could be parsed";
+        }
     }
 }
