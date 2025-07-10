@@ -2,6 +2,7 @@ package com.eziosoft.verandagal.client;
 
 import com.eziosoft.verandagal.Main;
 import com.eziosoft.verandagal.client.json.ImportableArtistsFile;
+import com.eziosoft.verandagal.client.utils.BulkImageImport;
 import com.eziosoft.verandagal.client.utils.ClientUtils;
 import com.eziosoft.verandagal.client.utils.ZipFileUtils;
 import org.apache.commons.cli.*;
@@ -42,8 +43,11 @@ public class VerandaCLI {
                 System.exit(1);
             }
             if (thefile.isDirectory() && !thefile.isFile()){
-                VerandaClient.log.error("Error: provided path {} is a directory and not file!", file);
-                System.exit(1);
+                // FIXME: DUMB HACK: dont fail if mode is bulk import
+                if (!sel_mode.equals("bulkimport")) {
+                    VerandaClient.log.error("Error: provided path {} is a directory and not file!", file);
+                    System.exit(1);
+                }
             }
             // and now the actual mode select
             switch (sel_mode){
@@ -81,6 +85,11 @@ public class VerandaCLI {
                     // TODO: fix this at some point
                     VerandaClient.log.info("running artists exporter...");
                     ClientUtils.exportArtists(thefile);
+                }
+                case "bulkimport" -> {
+                    // pass the file to the main bulk importer function
+                    BulkImageImport.doBulkImport(thefile);
+                    break;
                 }
                 default -> {
                     VerandaClient.log.error("Invalid mode \"{}\" selected!", sel_mode);
