@@ -1,5 +1,6 @@
 package com.eziosoft.verandagal.client.utils;
 
+import com.eziosoft.verandagal.client.objects.BulkImageObject;
 import com.eziosoft.verandagal.server.utils.ServerUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -8,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 

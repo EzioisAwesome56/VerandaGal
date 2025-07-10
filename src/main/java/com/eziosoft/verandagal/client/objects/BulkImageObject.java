@@ -1,4 +1,4 @@
-package com.eziosoft.verandagal.client.utils;
+package com.eziosoft.verandagal.client.objects;
 
 public class BulkImageObject {
 
