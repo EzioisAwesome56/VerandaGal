@@ -170,14 +170,14 @@ public class ClientUtils {
      * @param maindb provide a connection to the main database here
      * @return the artists file object
      */
-    public static ImportableArtistsFile exportArtists(MainDatabase maindb){
+    public static ImportableArtistsFile exportArtists(MainDatabase maindb) throws NullPointerException{
         // get the count of artists in the database
         long total_artists = maindb.getCountOfRecords(Artist.class);
         if (total_artists < 1){
             VerandaClient.log.error("Error: no artists returned or there was an error");
             VerandaClient.log.error("returned value was: {}", total_artists);
             // bail out
-            System.exit(1);
+            throw new NullPointerException("No artists found in the db, or there was an error");
         }
         // create a new object to store all of this crap
         ImportableArtistsFile file = new ImportableArtistsFile();
