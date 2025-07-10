@@ -5,6 +5,7 @@ public class ConfigFile {
     private final String serviceName;
     private final String databaseDir;
     private final String imageDir;
+    private final String imagePreviewDir;
     private final int webPort;
     private final boolean showStockFAQ;
     private final boolean showUserFAQ;
@@ -35,6 +36,7 @@ public class ConfigFile {
     public String getImageDir() {
         return this.imageDir;
     }
+    public String getImagePreviewDir() { return this.imagePreviewDir; }
 
     public String getServiceName() {
         return this.serviceName;
@@ -72,6 +74,7 @@ public class ConfigFile {
         this.serviceName = "VerandaGal";
         this.databaseDir = "/folder";
         this.imageDir = "/folder";
+        this.imagePreviewDir = "/folder";
         this.webPort = 6969;
         this.showStockFAQ = true;
         this.showUserFAQ = true;
