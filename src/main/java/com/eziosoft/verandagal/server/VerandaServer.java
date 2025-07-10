@@ -91,6 +91,7 @@ public class VerandaServer {
         server.addAsyncServlet(ArtistListServlet.class, "/artlist/*");
         server.addAsyncServlet(PackListServlet.class, "/packlist/*");
         server.addAsyncServlet(PackInfoServlet.class, "/packinfo/*");
+        server.addAsyncServlet(PreviewBackendServlet.class, "/preview/*");
         // start it
         server.start();
         /*

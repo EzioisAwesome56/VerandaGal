@@ -100,6 +100,13 @@ public class ImageViewServlet extends HttpServlet {
             // get the string of the image itself
             String imgview = VerandaServer.template.getTemplate("image");
             // now we have to replace all the shit
+            // TODO: make new previews an optional feature
+            if (true){
+                // if true, show new preview
+                imgview = imgview.replace("${PREVIEWURL}", "preview/?id=" + id);
+            } else {
+                imgview = imgview.replace("${PREVIEWURL}", "image/" + addpath + ourimage.getFilename());
+            }
             imgview = imgview.replace("${FILENAME}", FilenameUtils.getName(addpath + ourimage.getFilename()));
             File imagefile = ServerUtils.getImageFile(addpath + ourimage.getFilename());
             imgview = imgview.replace("${FILESIZE}", ServerUtils.getFileSizeMiB(imagefile));

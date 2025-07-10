@@ -1,6 +1,6 @@
 <div class="imgview-content">
             <div>
-                <img id="selimage" src="/img/${IMGURL}" alt="image" class="fit-width-thirty">
+                <img id="selimage" src="/${PREVIEWURL}" alt="image" class="fit-width-thirty">
             </div>
             Image display options:<br>
             <a onclick="set_full()" href="#">100% Max Width</a> | <a onclick="set_half()" href="#">50% Max Width</a> | <a onclick="set_thirty()" href="#">30% Max Width</a> | <a href="/img/${IMGURL}" download>Download image</a>
