@@ -7,12 +7,18 @@ public class BulkImageObject {
     private final int sitesource;
     private final int rating;
     private final boolean ai;
+    private final long artistid;
 
-    public BulkImageObject(String name, int source, boolean ai, int rating){
+    public BulkImageObject(String name, int source, boolean ai, int rating, long artid){
         this.filename = name;
         this.sitesource = source;
         this.rating = rating;
         this.ai = ai;
+        this.artistid = artid;
+    }
+
+    public long getArtistid() {
+        return artistid;
     }
 
     public String getFilename() {
