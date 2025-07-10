@@ -56,6 +56,9 @@ public class ImageBackendServlet extends HttpServlet {
             case "png":
                 resp.setContentType("image/png");
                 break;
+            case "webp":
+                resp.setContentType("image/webp");
+                break;
             default:
                 VerandaServer.LOGGER.warn("Unknown mime type, sending octet-stream and hoping for the best");
                 // per spec on MDN web docs, we should be setting the content type to this
