@@ -84,7 +84,7 @@ public class VerandaCLI {
                     // note: you may have to make a dummy file to get past the exists check
                     // TODO: fix this at some point
                     VerandaClient.log.info("running artists exporter...");
-                    ClientUtils.exportArtists(thefile);
+                    ClientUtils.exportArtistsToFile(thefile);
                 }
                 case "bulkimport" -> {
                     // pass the file to the main bulk importer function

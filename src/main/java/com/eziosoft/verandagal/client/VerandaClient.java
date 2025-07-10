@@ -74,7 +74,7 @@ public class VerandaClient {
         // pop open a file selector to pick where you wish to sae the file
         File output_file = ClientUtils.browseForFile("Save artists file as...");
         // pass it on to the actual method for doing this
-        ClientUtils.exportArtists(output_file);
+        ClientUtils.exportArtistsToFile(output_file);
     }
 
     /**

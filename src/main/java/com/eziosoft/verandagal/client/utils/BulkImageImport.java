@@ -1,16 +1,23 @@
 package com.eziosoft.verandagal.client.utils;
 
+import com.eziosoft.verandagal.client.json.ArtistEntry;
+import com.eziosoft.verandagal.client.json.ImportableArtistsFile;
 import com.eziosoft.verandagal.client.objects.BulkImageObject;
+import com.eziosoft.verandagal.database.MainDatabase;
+import com.eziosoft.verandagal.database.ThumbnailStore;
+import com.eziosoft.verandagal.database.objects.Image;
+import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.utils.ServerUtils;
+import com.eziosoft.verandagal.utils.ConfigFile;
+import com.eziosoft.verandagal.utils.ConfigUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.io.IOException;
+import java.util.*;
 
 public class BulkImageImport {
 
@@ -66,8 +73,56 @@ public class BulkImageImport {
         }
         // done sorting shit
         log.info("File detection done; found {} supported image files", supportedfiles.size());
+        // get a copy of the config file
+        ConfigFile config;
+        try {
+            config = ConfigUtils.getConfigFile();
+        } catch (IOException e){
+            // an error was already reported for this, so we can just fail
+            log.error("Failure while trying to get config file");
+            return;
+        }
+        // spin up the main database
+        log.info("Connecting to main database");
+        MainDatabase maindb = new MainDatabase(config);
+        // load the artists file
+        ImportableArtistsFile artists = ClientUtils.exportArtists(maindb);
         // prepare our basic image metadata
-        ArrayList<BulkImageObject> bulkobjs = prepareMetadata(supportedfiles, scan);
+        ArrayList<BulkImageObject> bulkobjs = prepareMetadata(supportedfiles, scan, artists);
+        // import our artists file for changes
+        ClientUtils.importArtistsWithDatabaseConnection(artists, maindb);
+        // get a basic image pack
+        ImagePack pack = createImagePack(bulkobjs.size(), scan);
+        log.info("Connecting to thumbnail database");
+        ThumbnailStore thumbnail = new ThumbnailStore(config);
+        // create the directory for storing images
+        File baseimgdir = new File(config.getImageDir());
+        File packimgdir = new File(baseimgdir, pack.getFsdir());
+        packimgdir.mkdir();
+        // also open the directory for storing image previews
+        File preview = new File(config.getImagePreviewDir());
+        // save our pack to the database
+        maindb.SaveObject(pack);
+        // now we can get our packid
+        long packid = pack.getId();
+        // get the date also
+        Date date = new Date();
+        // now we can start importing the images
+        log.info("Now importing images into database...");
+        for (BulkImageObject bulk : bulkobjs){
+            // make a new database image object
+            Image dbent = new Image();
+            // fill in what we can about the images
+            dbent.setUploaddate(date.toString());
+            dbent.setRating(bulk.getRating());
+            dbent.setPackid(packid);
+            // from bulk image importer
+            dbent.setUploaderComments("Uploaded using Bulk Image Importer<br>some information may be missing or inaccurate");
+            // other provided imformation
+            dbent.setAI(bulk.isAi());
+            dbent.setFilename(bulk.getFilename());
+
+        }
     }
 
     /**
@@ -118,7 +173,7 @@ public class BulkImageImport {
      * @param input input list of supported files
      * @return list of objects with basic metadata
      */
-    private static ArrayList<BulkImageObject> prepareMetadata(List<File> input, Scanner scan){
+    private static ArrayList<BulkImageObject> prepareMetadata(List<File> input, Scanner scan, ImportableArtistsFile artists){
         // create our new list
         ArrayList<BulkImageObject> bulkobjs = new ArrayList<>();
         // options
@@ -196,6 +251,26 @@ public class BulkImageImport {
         log.info("Settings have been applied!");
         log.info("Prompt for rating: {}, default rating value: {}", promptforrating, defaultrate);
         log.info("Prompt for AI: {}, default AI value: {}", promptforai, defaultai);
+        // verify we have a bulk artist in the list already
+        boolean hasbulk = false;
+        long bulkid = -1;
+        for (Map.Entry<Long, ArtistEntry> ent : artists.getArtists().entrySet()){
+            if (ent.getValue().getName().toLowerCase().equals("bulkimportbot")){
+                hasbulk = true;
+                bulkid = ent.getKey();
+            }
+        }
+        if (!hasbulk){
+            log.info("No bulk artist exists, creating a new one");
+            ArtistEntry bulkart = new ArtistEntry();
+            bulkart.setName("Bulk Importer Bot 9000");
+            bulkart.setNotes("uploaded using the bulk import feature");
+            bulkart.setUrls(new String[]{"none"});
+            // get our id for the new artist
+            bulkid = artists.getArtists().size() + 1;
+            // add our new artist
+            artists.addArtist(bulkid, bulkart);
+        }
         // now to start generating entries
         for (File f : input){
             // get the file name
@@ -216,8 +291,16 @@ public class BulkImageImport {
             } else {
                 ai = promptForAi(name, scan);
             }
+            // figure out if we should set this file as owned by an artist
+            long artistid;
+            if (site == 2){
+                artistid = parseDAFilenameForArtist(name, artists);
+            } else {
+                // we have no idea, default to bulkid
+                artistid = bulkid;
+            }
             // create a new object
-            BulkImageObject temp = new BulkImageObject(name, site, ai, rate);
+            BulkImageObject temp = new BulkImageObject(name, site, ai, rate, artistid);
             // add to list
             bulkobjs.add(temp);
         }
@@ -273,5 +356,98 @@ public class BulkImageImport {
         }
         // return our value
         return ai;
+    }
+
+    /**
+     * call this function to ask the user a couple of questions, required to fill in pack information
+     * @param num_items number of items that will be present in the pack
+     * @param scan scanner to handle console
+     * @return imagepack object that can be placed into the db later
+     */
+    private static ImagePack createImagePack(int num_items, Scanner scan){
+        // setup all the information we need to collect right now
+        String packname;
+        String packdec;
+        Date whattimeisit = new Date();
+        String uploaddate = whattimeisit.toString();
+        long total = num_items;
+        String fsdir;
+        // ask for folder name
+        while (true){
+            System.out.print("Please enter name for filesystem folder: ");
+            fsdir = scan.nextLine();
+            if (!fsdir.isEmpty()){
+                System.out.println("Folder name set to: " + fsdir);
+                break;
+            }
+        }
+        // ask for pack name
+        while (true){
+            System.out.print("Please enter name for image pack: ");
+            packname = scan.nextLine();
+            if (!packname.isEmpty()){
+                System.out.println("Pack name set to: " + packname);
+                break;
+            }
+        }
+        // ask for pack description
+        while (true){
+            System.out.print("Please enter pack description: ");
+            packdec = scan.nextLine();
+            if (!packdec.isEmpty()){
+                System.out.println("Pack description set to: " + packdec);
+                break;
+            }
+        }
+        // create new basic image pack object
+        ImagePack pack = new ImagePack();
+        pack.setTotalImages(total);
+        pack.setDescription(packdec);
+        pack.setFsdir(fsdir);
+        pack.setName(packname);
+        pack.setUploadDate(uploaddate);
+        // return that object
+        return pack;
+    }
+
+    /**
+     * Parse filename for Deviantart files to extract artist information
+     * those files usually end in the format of _by_<artist>_<nonsense>
+     * @param name filename to parse
+     * @param artists artists file
+     * @return id of artist if found, or created. return bulkid on any errors
+     */
+    private static long parseDAFilenameForArtist(String name, ImportableArtistsFile artists){
+        // start by making the entire filename lowercase
+        String sane = name.toLowerCase();
+        // split via _by_
+        String[] firstsplit = sane.split("_by_");
+        // split again by _ to remove the extra crap
+        String[] secondsplit = firstsplit[1].split("_");
+        log.debug("Found artist name: {}", secondsplit[0]);
+        long artid = -1;
+        // try and find it
+        for (Map.Entry<Long, ArtistEntry> ent : artists.getArtists().entrySet()){
+            if (ent.getValue().getName().toLowerCase().equals(secondsplit[0])){
+                // it exists, get the value and yeet
+                artid = ent.getKey();
+                break;
+            }
+        }
+        // if we have something, return that, otherwise make a new artist
+        if (artid <= -1) {
+            // we have to make a new artist, so do that
+            log.info("Creating new artist: {}", secondsplit[0]);
+            ArtistEntry artent = new ArtistEntry();
+            artent.setName(secondsplit[0]);
+            artent.setNotes("Automatically created by bulk importer from a detected deviantart filename");
+            artent.setUrls(new String[]{"https://www.deviantart.com/" + secondsplit[0]});
+            // get our new artid
+            artid = artists.getArtists().size() + 1;
+            // add our artist
+            artists.addArtist(artid, artent);
+            // return our new value
+        }
+        return artid;
     }
 }
