@@ -16,6 +16,7 @@ public class ConfigFile {
     private final boolean ShowSQL;
     private final int ItemsPerRow;
     private final boolean ShowDebugLog;
+    private final boolean DontUsePreviews;
 
     public boolean isShowStockFAQ() {
         return this.showStockFAQ;
@@ -69,6 +70,10 @@ public class ConfigFile {
         return this.ShowDebugLog;
     }
 
+    public boolean isDontUsePreviews() {
+        return this.DontUsePreviews;
+    }
+
     public ConfigFile(){
         // make a blank config file with default values
         this.serviceName = "VerandaGal";
@@ -85,5 +90,6 @@ public class ConfigFile {
         this.ShowSQL = false;
         this.ItemsPerRow = 7;
         this.ShowDebugLog = false;
+        this.DontUsePreviews = false;
     }
 }

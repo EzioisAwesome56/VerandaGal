@@ -1,5 +1,6 @@
 package com.eziosoft.verandagal.server.servlets;
 
+import com.eziosoft.verandagal.client.utils.ImageUtils;
 import com.eziosoft.verandagal.database.objects.Artist;
 import com.eziosoft.verandagal.database.objects.ImagePack;
 import jakarta.servlet.AsyncContext;
@@ -22,7 +23,7 @@ public class ImageViewServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // set the mime type right away for simplicity
-        resp.setContentType("text/html");
+        resp.setContentType("text/html; charset=UTF-8");
         // get the id
         long id;
         try {
@@ -100,12 +101,12 @@ public class ImageViewServlet extends HttpServlet {
             // get the string of the image itself
             String imgview = VerandaServer.template.getTemplate("image");
             // now we have to replace all the shit
-            // TODO: make new previews an optional feature
-            if (true){
+            if (!VerandaServer.configFile.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(ourimage.getFilename())){
                 // if true, show new preview
                 imgview = imgview.replace("${PREVIEWURL}", "preview/?id=" + id);
             } else {
-                imgview = imgview.replace("${PREVIEWURL}", "image/" + addpath + ourimage.getFilename());
+                // otherwise, just show the original image
+                imgview = imgview.replace("${PREVIEWURL}", "img/" + addpath + ourimage.getFilename());
             }
             imgview = imgview.replace("${FILENAME}", FilenameUtils.getName(addpath + ourimage.getFilename()));
             File imagefile = ServerUtils.getImageFile(addpath + ourimage.getFilename());

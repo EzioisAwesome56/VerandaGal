@@ -161,19 +161,25 @@ public class BulkImageImport {
             byte[] previewbytes = null;
             byte[] thumbnailbytes = null;
             try {
-                previewbytes = ImageUtils.generateImagePreview(temp);
+                // webp previews may be disabled, dont waste diskspace if they are
+                if (!config.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(bulk.getFilename())){
+                    previewbytes = ImageUtils.generateImagePreview(temp);
+                }
                 thumbnailbytes = ImageProcessor.generateThumbnail(temp);
             } catch (IOException e){
                 log.error("Something went wrong during thumbnail/preview gen, this may break things!");
                 log.error(e);
             }
-            // create a new file, then write the webp to it
-            File preview_file = new File(preview, dbent.getId() + ".webp");
-            try {
-                FileUtils.writeByteArrayToFile(preview_file, previewbytes);
-            } catch (IOException e){
-                log.error("Error while trying to write preview webp file");
-                log.error(e);
+            // we can cheat by checking to make sure the array isnt null before writing
+            if (previewbytes != null) {
+                // create a new file, then write the webp to it
+                File preview_file = new File(preview, dbent.getId() + ".webp");
+                try {
+                    FileUtils.writeByteArrayToFile(preview_file, previewbytes);
+                } catch (IOException e) {
+                    log.error("Error while trying to write preview webp file");
+                    log.error(e);
+                }
             }
             // now we have to write the thumbnail into the database
             Thumbnail thumbnailent = new Thumbnail();

@@ -1,6 +1,7 @@
 package com.eziosoft.verandagal.client.utils;
 
 import com.luciad.imageio.webp.WebPWriteParam;
+import org.apache.commons.io.FilenameUtils;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -87,5 +88,26 @@ public class ImageUtils {
         // now close and return the final product
         stream.close();
         return content;
+    }
+
+    // add extensions to force webp previews for here
+    private static final String[] extensions = new String[]{"psd"};
+    /**
+     * this is the main check that sees if we have to ignore the option to not use webp previews
+     * namely, PSD needs this
+     * @param filename filename to prase to see if we need an exception
+     * @return false if no, true if we need to use a webp preview image
+     */
+    public static boolean checkIfFormatRequiresPreview(String filename){
+        // get the extension for the file we are dealing with
+        String ext = FilenameUtils.getExtension(filename).toLowerCase();
+        // check to see if the extension is in the list
+        for (String s : extensions){
+            if (s.equals(ext)){
+                return true;
+            }
+        }
+        // if we fall out of the for loop, return false
+        return false;
     }
 }
