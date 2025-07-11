@@ -504,16 +504,21 @@ public class BulkImageImport {
      */
     private static long parseDAFilenameForArtist(String name, ImportableArtistsFile artists){
         // start by making the entire filename lowercase
-        String sane = name.toLowerCase();
+        // remove file extension from artist names
+        String sane = FilenameUtils.getBaseName(name.toLowerCase());
         // split via _by_
         String[] firstsplit = sane.split("_by_");
         // split again by _ to remove the extra crap
-        String[] secondsplit = firstsplit[1].split("_");
-        log.debug("Found artist name: {}", secondsplit[0]);
+        String[] oofsplit = firstsplit[1].split("_");
+        // we now need a third split, to get rid of trailing -
+        // based on https://stackoverflow.com/a/20905080
+        int i = oofsplit[0].lastIndexOf("-");
+        String thesplit = oofsplit[0].substring(0, i);
+        log.debug("Found artist name: {}", thesplit);
         long artid = -1;
         // try and find it
         for (Map.Entry<Long, ArtistEntry> ent : artists.getArtists().entrySet()){
-            if (ent.getValue().getName().toLowerCase().equals(secondsplit[0])){
+            if (ent.getValue().getName().toLowerCase().equals(thesplit)){
                 // it exists, get the value and yeet
                 artid = ent.getKey();
                 break;
@@ -522,11 +527,11 @@ public class BulkImageImport {
         // if we have something, return that, otherwise make a new artist
         if (artid <= -1) {
             // we have to make a new artist, so do that
-            log.info("Creating new artist: {}", secondsplit[0]);
+            log.info("Creating new artist: {}", thesplit);
             ArtistEntry artent = new ArtistEntry();
-            artent.setName(secondsplit[0]);
+            artent.setName(thesplit);
             artent.setNotes("Automatically created by bulk importer from a detected deviantart filename");
-            artent.setUrls(new String[]{"https://www.deviantart.com/" + secondsplit[0]});
+            artent.setUrls(new String[]{"https://www.deviantart.com/" + thesplit});
             // get our new artid
             artid = artists.getArtists().size() + 1;
             // add our artist
