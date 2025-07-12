@@ -15,6 +15,8 @@ import javax.swing.filechooser.FileFilter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class ClientUtils {
@@ -244,6 +246,33 @@ public class ClientUtils {
             // give up, we failed
             System.exit(1);
         }
+    }
+
+    /**
+     * this can take an input list and make x number of lists from the input items
+     * @param num number of lists to return
+     * @param input list full of input items
+     * @return list with lists in it
+     */
+    public static ArrayList<ArrayList> splitToXLists(int num, List input){
+        // setup the new lists
+        ArrayList<ArrayList> lists = new ArrayList<>();
+        for (int i = 0; i < num; i++){
+            lists.add(new ArrayList<Object>());
+        }
+        // then, make a blank count variable
+        int count = 0;
+        // then, put all the input objects into all the lists
+        for (Object obj : input){
+            lists.get(count).add(obj);
+            count++;
+            // bounds checking
+            if (count >= num){
+                count = 0;
+            }
+        }
+        // we're done making the list, return it
+        return lists;
     }
 
 
