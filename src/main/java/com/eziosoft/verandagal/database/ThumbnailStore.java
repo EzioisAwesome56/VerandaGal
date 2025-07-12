@@ -3,6 +3,7 @@ package com.eziosoft.verandagal.database;
 import com.eziosoft.verandagal.utils.ConfigFile;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.StatelessSession;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
@@ -58,7 +59,23 @@ public class ThumbnailStore {
         act.commit();
         // close it
         sesh.close();
-        //return id;
+    }
+
+    /**
+     * use this to save a thumbnail that already has an ID attached to its object
+     * FIXME: oh my god somebody pelase make this work
+     * @param obj thumbnail with manually set ID
+     */
+    public void MergeThumbnail(Thumbnail obj){
+        // create session
+        StatelessSession sesh = this.factory.openStatelessSession();
+        // open a transaction
+        Transaction act = sesh.beginTransaction();
+        // we have to use merge instead of save
+        sesh.upsert(obj);
+        // commit and close it
+        act.commit();
+        sesh.close();
     }
 
     public Thumbnail LoadThumbnail(long id){
