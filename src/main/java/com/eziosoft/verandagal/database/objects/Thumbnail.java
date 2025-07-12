@@ -22,4 +22,8 @@ public class Thumbnail {
     public void setImagedata(byte[] imagedata) {
         this.imagedata = imagedata;
     }
+    // new: in some cases, setting a id manually is required
+    public void setId(long id){
+        this.id = id;
+    }
 }
