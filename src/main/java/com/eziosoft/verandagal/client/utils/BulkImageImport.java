@@ -32,7 +32,8 @@ public class BulkImageImport {
             "jpg",
             "jpeg",
             "psd",
-            "webp"
+            "webp",
+            "gif"
     };
 
     // create a new logger for this class
@@ -513,7 +514,13 @@ public class BulkImageImport {
         // we now need a third split, to get rid of trailing -
         // based on https://stackoverflow.com/a/20905080
         int i = oofsplit[0].lastIndexOf("-");
-        String thesplit = oofsplit[0].substring(0, i);
+        // HOTFIX: skip this part if i is -1
+        String thesplit;
+        if (i != -1){
+            thesplit = oofsplit[0].substring(0, i);
+        } else {
+            thesplit = oofsplit[0];
+        }
         log.debug("Found artist name: {}", thesplit);
         long artid = -1;
         // try and find it
