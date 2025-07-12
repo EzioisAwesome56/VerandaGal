@@ -3,15 +3,15 @@ package com.eziosoft.verandagal.client.utils;
 import com.eziosoft.verandagal.client.json.ArtistEntry;
 import com.eziosoft.verandagal.client.json.ImportableArtistsFile;
 import com.eziosoft.verandagal.client.objects.BulkImageObject;
+import com.eziosoft.verandagal.client.objects.ImageImportJob;
+import com.eziosoft.verandagal.client.objects.ImageImportWorker;
 import com.eziosoft.verandagal.database.MainDatabase;
 import com.eziosoft.verandagal.database.ThumbnailStore;
 import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
-import com.eziosoft.verandagal.database.objects.Thumbnail;
 import com.eziosoft.verandagal.server.utils.ServerUtils;
 import com.eziosoft.verandagal.utils.ConfigFile;
 import com.eziosoft.verandagal.utils.ConfigUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,9 +20,10 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BulkImageImport {
 
@@ -122,6 +123,10 @@ public class BulkImageImport {
         Date date = new Date();
         // now we can start importing the images
         log.info("Now importing images into database...");
+        /* create a list for later
+        this will store all the thumbnail/preview jobs
+         */
+        ArrayList<ImageImportJob> imagejobs = new ArrayList<>();
         for (BulkImageObject bulk : bulkobjs){
             // make a new database image object
             Image dbent = new Image();
@@ -158,52 +163,36 @@ public class BulkImageImport {
             // then, we can import this image into the database
             maindb.SaveObject(dbent);
             // now we have an imageid!
-            // create a preview for it
-            byte[] previewbytes = null;
-            byte[] thumbnailbytes = null;
-            try {
-                // webp previews may be disabled, dont waste diskspace if they are
-                if (!config.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(bulk.getFilename())){
-                    previewbytes = ImageUtils.generateImagePreview(temp);
-                }
-                thumbnailbytes = ImageProcessor.generateThumbnail(temp);
-            } catch (IOException e){
-                log.error("Something went wrong during thumbnail/preview gen, this may break things!");
-                log.error(e);
-            }
-            // we can cheat by checking to make sure the array isnt null before writing
-            if (previewbytes != null) {
-                // create a new file, then write the webp to it
-                File preview_file = new File(preview, dbent.getId() + ".webp");
-                try {
-                    FileUtils.writeByteArrayToFile(preview_file, previewbytes);
-                } catch (IOException e) {
-                    log.error("Error while trying to write preview webp file");
-                    log.error(e);
-                }
-            }
-            // now we have to write the thumbnail into the database
-            Thumbnail thumbnailent = new Thumbnail();
-            // make sure its not null, if it is we have a problem
-            if (thumbnailbytes == null){
-                log.error("Thumbnail bytes are null, filling with dummy bytes. this will break shit!");
-                thumbnailbytes = new byte[]{(byte) 255, (byte) 255};
-            }
-            thumbnailent.setImagedata(thumbnailbytes);
-            // write this to the thumbnail database
-            thumbnail.SaveThumbnail(thumbnailent);
-            if (thumbnailent.getId() != dbent.getId()){
-                log.warn("Thumbnail db id does not match image id in database. something may be wrong");
-            }
-            // now we just need to move the file
-            try {
-                Files.move(ogsource.toPath(), new File(packimgdir, dbent.getFilename()).toPath(), StandardCopyOption.ATOMIC_MOVE);
-            } catch (IOException e){
-                log.error("Something went wrong while trying to move a file!");
-                log.error(e);
-            }
-            log.info("Imported image {}", dbent.getFilename());
+            // create a new job for it
+            ImageImportJob job = new ImageImportJob(ogsource, dbent.getId(), packimgdir);
+            imagejobs.add(job);
+            log.info("Imported image {} into database", dbent.getFilename());
         }
+        // now, we should have a list of jobs
+        log.info("Number of image jobs: {}", imagejobs.size());
+        // now we need to get setup for threading stuff
+        // 4 threads should be enough, TODO: allow for custom number of threads
+        int numthreads = 4;
+        CountDownLatch latch = new CountDownLatch(numthreads);
+        ExecutorService executor = Executors.newFixedThreadPool(numthreads);
+        ArrayList<ArrayList> jobslist = ClientUtils.splitToXLists(numthreads, imagejobs);
+        log.debug("asked for 4 lists, got {} lists", jobslist.size());
+        // execute all the threads now
+        for (int i = 0; i < numthreads; i++){
+            log.info("Starting thread no. {}", i);
+            executor.execute(new ImageImportWorker(latch, jobslist.get(i), thumbnail, config));
+        }
+        // apparently we need to shutdown the executor now
+        executor.shutdown();
+        // now we wait for the latch to go off
+        try {
+            latch.await();
+        } catch (InterruptedException e){
+            log.error("Something went wrong while waiting for threads to finish!");
+            log.error(e);
+            log.error("Continuing anyway, but stuff may be broken");
+        }
+
         log.info("Done importing images. enjoy!");
         // clean up some shit
         thumbnail.close();
