@@ -1,6 +1,5 @@
 package com.eziosoft.verandagal.server.servlets;
 
-import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.VerandaServer;
 import com.eziosoft.verandagal.server.objects.ItemPage;
@@ -17,9 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class GalleryBrowseServlet extends HttpServlet {
 
@@ -94,7 +91,7 @@ public class GalleryBrowseServlet extends HttpServlet {
             // by now we dont need the -1 in logic, so we can just fix it
             if (pageno == -1) pageno = 0;
             nav = nav.replace("${SIMPLENAV}", ServerUtils.buildNavigation(page, pageno, "/pack/?pid=" + pack.getId()));
-            // TODO: rest of nav
+            nav = nav.replace("${PAGES}", ServerUtils.buildPageCount(page, pageno));
             gallery = gallery.replace("${NAV}", nav);
         } else {
             gallery = gallery.replace("${NAV}", "");

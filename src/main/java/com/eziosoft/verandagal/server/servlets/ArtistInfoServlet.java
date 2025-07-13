@@ -91,6 +91,7 @@ public class ArtistInfoServlet extends HttpServlet {
             String oof = VerandaServer.template.getTemplate("navigation");
             if (pageno == -1) pageno = 0;
             oof = oof.replace("${SIMPLENAV}", ServerUtils.buildNavigation(pageitem, pageno, "/artist/?id=" + artist.getId()));
+            oof = oof.replace("${PAGES}", ServerUtils.buildPageCount(pageitem, pageno));
             arttemp = arttemp.replace("${NAV}", oof);
             // also show total number of items
             arttemp = arttemp.replace("${IMGCOUNT}", "Showing " + pageitem.getPageContents().length + " of " + imgids_raw.length + " items");

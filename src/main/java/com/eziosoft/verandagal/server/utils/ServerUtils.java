@@ -266,4 +266,8 @@ public class ServerUtils {
         // return it
         return nav.toString();
     }
+
+    public static String buildPageCount(ItemPage page, int cur_page){
+        return "Page " + cur_page + " of " + (page.getTotal_pages() - 1);
+    }
 }
