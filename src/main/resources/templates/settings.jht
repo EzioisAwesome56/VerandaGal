@@ -11,6 +11,10 @@
 	<input type="checkbox" id="ai" name="ai" ${AI}><br>
 	<label for="itemrow">Number of items per row:</label>
 	<input id="itemrow" name="itemrow" type="number" value="${ITEMROW}" min="3"><br>
+	<label for="pages">Enable Pagination</label>
+	<input id="pages" name="pages" type="checkbox" ${PAGEINATE}><br>
+	<label for="pagecount">Number of items per page:</label>
+    <input id="pagecount" name="pagecount" type="number" value="${PAGECOUNT}" min="8"><br>
 	<input type="submit" value="Save settings">
 </form>
 ${STATUS}

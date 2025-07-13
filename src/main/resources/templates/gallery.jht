@@ -1,5 +1,6 @@
 <div class="content">
             <h3 class="nowhitespace">${PACKNAME}</h3>
+            <h4 class="nowhitespace">${ITEMCOUNT}</h4>
             <table class="galbrowse">
                 <tbody>
                     ${GALCONTENT}
@@ -7,25 +8,6 @@
             </table>
             <div class="bottomnav">
                 ${FILT_COUNT}
-                <table class="center">
-                    <tr>
-                        <td>Previous page</td>
-                        <td>|</td>
-                        <td>Next Page</td>
-                        <td>|</td>
-                        <td>First page</td>
-                        <td>|</td>
-                        <td>Last page</td>
-                    </tr>
-                </table>
-                <table class="center">
-                    <tr>
-                        <td>1</td>
-                        <td>2</td>
-                        <td>3</td>
-                        <td>...</td>
-                        <td>427</td>
-                    </tr>
-                </table>
+                ${NAV}
             </div>
         </div>

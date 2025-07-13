@@ -17,6 +17,8 @@ public class ConfigFile {
     private final int ItemsPerRow;
     private final boolean ShowDebugLog;
     private final boolean DontUsePreviews;
+    private final boolean pageinationdefault;
+    private final int itemsperpage;
 
     public boolean isShowStockFAQ() {
         return this.showStockFAQ;
@@ -73,6 +75,12 @@ public class ConfigFile {
     public boolean isDontUsePreviews() {
         return this.DontUsePreviews;
     }
+    public boolean isPageinationdefault() {
+        return this.pageinationdefault;
+    }
+    public int getItemsperpage() {
+        return this.itemsperpage;
+    }
 
     public ConfigFile(){
         // make a blank config file with default values
@@ -91,5 +99,7 @@ public class ConfigFile {
         this.ItemsPerRow = 7;
         this.ShowDebugLog = false;
         this.DontUsePreviews = false;
+        this.pageinationdefault = false;
+        this.itemsperpage = 40;
     }
 }

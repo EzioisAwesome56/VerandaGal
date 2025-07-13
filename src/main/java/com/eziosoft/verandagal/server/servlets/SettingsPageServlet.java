@@ -23,8 +23,9 @@ public class SettingsPageServlet  extends HttpServlet {
         HttpSession session = req.getSession();
         SessionObject obj = SessionUtils.getSessionDetails(session);
         // setup a bunch of booleans
-        boolean normal = false, spicy = false, extraspicy = false, ai = false;
+        boolean normal = false, spicy = false, extraspicy = false, ai = false, pageinate = false;
         String itemsperrow = "";
+        String itemsperpage = "";
         for (Map.Entry<String, String[]> thing : req.getParameterMap().entrySet()){
             switch (thing.getKey()) {
                 case "normal" -> {
@@ -47,6 +48,14 @@ public class SettingsPageServlet  extends HttpServlet {
                     itemsperrow = thing.getValue()[0];
                     continue;
                 }
+                case "pages" -> {
+                    pageinate = true;
+                    continue;
+                }
+                case "pagecount" -> {
+                    itemsperpage = thing.getValue()[0];
+                    continue;
+                }
             }
         }
         // then, once we have everything, update the session
@@ -54,6 +63,7 @@ public class SettingsPageServlet  extends HttpServlet {
         obj.setShow_extra_spicy(extraspicy);
         obj.setShow_normal(normal);
         obj.setShow_spicy(spicy);
+        obj.setUse_pagination(pageinate);
         // we have a field that accepts user input, so we have to do some defensive programming
         int itemsrow;
         try {
@@ -64,8 +74,18 @@ public class SettingsPageServlet  extends HttpServlet {
             // somebody tried to input something invalid, reset it to default
             itemsrow = VerandaServer.configFile.getItemsPerRow();
         }
+        int itemspage;
+        try {
+            itemspage = Integer.parseInt(itemsperpage);
+            // make sure its not some stupid value
+            if (itemspage < 1) itemspage = 3;
+        } catch (Exception e){
+            // set it to the default if they tried something invalid
+            itemspage = VerandaServer.configFile.getItemsperpage();
+        }
         // update the value in the session
         obj.setItemsperrow(itemsrow);
+        obj.setItems_per_page(itemspage);
         // write updated session
         SessionUtils.updateSessionDetails(session, obj);
         // get the page
@@ -109,6 +129,8 @@ public class SettingsPageServlet  extends HttpServlet {
         settings_page = settings_page.replace("${ESPICE}", seshobj.isShow_extra_spicy() ? "checked" : "");
         settings_page = settings_page.replace("${AI}", seshobj.isShow_ai() ? "checked" : "");
         settings_page = settings_page.replace("${ITEMROW}", Integer.toString(seshobj.getItemsperrow()));
+        settings_page = settings_page.replace("${PAGEINATE}", seshobj.isUse_pagination() ? "checked" : "");
+        settings_page = settings_page.replace("${PAGECOUNT}", Integer.toString(seshobj.getItems_per_page()));
         b.append(settings_page);
         b.append(VerandaServer.template.getTemplate("footer"));
         return b.toString();

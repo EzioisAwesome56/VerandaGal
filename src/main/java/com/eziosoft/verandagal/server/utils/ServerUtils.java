@@ -1,6 +1,7 @@
 package com.eziosoft.verandagal.server.utils;
 
 import com.eziosoft.verandagal.database.objects.Image;
+import com.eziosoft.verandagal.server.objects.ItemPage;
 import com.eziosoft.verandagal.server.objects.SessionObject;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletOutputStream;
@@ -175,6 +176,11 @@ public class ServerUtils {
         // for funsies, count how  many items got filtered
         int filter_count = 0;
         for (long image_id : raw_imageids){
+            // because pagination exists, check to see if negative 1
+            if (image_id == -1){
+                // if so, skip it
+                continue;
+            }
             // load the image from the database
             Image tmpimage = VerandaServer.maindb.LoadObject(Image.class, image_id);
             if (tmpimage == null){
@@ -234,5 +240,30 @@ public class ServerUtils {
         output.put(0, tablebuilder.toString());
         output.put(1, filter_count);
         return output;
+    }
+
+    /**
+     * general-purpose function to easily create the navigation at the bottom of a page, if required
+     * @param page the current page object
+     * @param cur_page current page
+     * @return navigation
+     */
+    public static String buildNavigation(ItemPage page, int cur_page, String cur_url){
+        // create a new stringbuilder to work with
+        StringBuilder nav = new StringBuilder();
+        // first part: build previous and next page if required
+        if (cur_page > 0){
+            nav.append("<td><a href=\"").append(cur_url).append("&p=").append(cur_page - 1).append("\">Previous page</a></td>");
+            nav.append("<td>|</td>");
+        }
+        if (cur_page < page.getTotal_pages() - 1){
+            nav.append("<td><a href=\"").append(cur_url).append("&p=").append(cur_page + 1).append("\">Next Page</a></td>");
+            nav.append("<td>|</td>");
+        }
+        // first and last page buttons
+        nav.append("<td><a href=\"").append(cur_url).append("&p=0").append("\">First page</a></td>").append("<td>|</td>");
+        nav.append("<td><a href=\"").append(cur_url).append("&p=").append(page.getTotal_pages() - 1).append("\">Last page</a></td>");
+        // return it
+        return nav.toString();
     }
 }

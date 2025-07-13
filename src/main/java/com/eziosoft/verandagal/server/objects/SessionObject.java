@@ -11,6 +11,8 @@ public class SessionObject {
     private boolean show_extra_spicy;
     private boolean show_ai;
     private int itemsperrow;
+    private boolean use_pagination;
+    private int items_per_page;
 
     public boolean isShow_ai() {
         return show_ai;
@@ -52,6 +54,22 @@ public class SessionObject {
         this.itemsperrow = itemsperrow;
     }
 
+    public boolean isUse_pagination() {
+        return this.use_pagination;
+    }
+
+    public void setUse_pagination(boolean use_pagination) {
+        this.use_pagination = use_pagination;
+    }
+
+    public int getItems_per_page() {
+        return this.items_per_page;
+    }
+
+    public void setItems_per_page(int items_per_page) {
+        this.items_per_page = items_per_page;
+    }
+
     public void setDefaults(){
         // set the default settings
         this.show_ai = false;
@@ -60,5 +78,7 @@ public class SessionObject {
         this.show_extra_spicy = false;
         // set the default to the one in the config file
         this.itemsperrow = VerandaServer.configFile.getItemsPerRow();
+        this.use_pagination = VerandaServer.configFile.isPageinationdefault();
+        this.items_per_page = VerandaServer.configFile.getItemsperpage();
     }
 }

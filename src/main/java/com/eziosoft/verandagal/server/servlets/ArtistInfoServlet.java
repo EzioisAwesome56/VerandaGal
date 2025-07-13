@@ -2,8 +2,11 @@ package com.eziosoft.verandagal.server.servlets;
 
 import com.eziosoft.verandagal.database.objects.Artist;
 import com.eziosoft.verandagal.server.VerandaServer;
+import com.eziosoft.verandagal.server.objects.ItemPage;
+import com.eziosoft.verandagal.server.objects.SessionObject;
 import com.eziosoft.verandagal.server.utils.BasicTextWriter;
 import com.eziosoft.verandagal.server.utils.ServerUtils;
+import com.eziosoft.verandagal.server.utils.SessionUtils;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
@@ -36,6 +39,13 @@ public class ArtistInfoServlet extends HttpServlet {
             ServerUtils.handleInvalidRequest(req, resp, "invalidartist");
             return;
         }
+        int pageno;
+        try {
+            pageno = Integer.parseInt(req.getParameter("p"));
+        } catch (Exception e){
+            // set to -1, it either doesnt exist or we are being scammed
+            pageno = -1;
+        }
         // then, do stuff
         StringBuilder page = new StringBuilder();
         // get the basics
@@ -57,9 +67,13 @@ public class ArtistInfoServlet extends HttpServlet {
         arttemp = arttemp.replace("${ARTNOTES}", artist.getNotes());
         // pain in the ass time: display all images owned by the artist in a gallery on their page
         // get all the ids owned by them
-        Long[] imgids = VerandaServer.maindb.getAllImagesByArtist(artist.getId());
+        Long[] imgids_raw = VerandaServer.maindb.getAllImagesByArtist(artist.getId());
+        // next, we have to do pagination shit
+        ItemPage pageitem = new ItemPage(imgids_raw, req);
+        if (pageno != -1) pageitem.setCurrentPage(pageno);
+        pageitem.generatePage();
         // get the built table
-        HashMap<Integer, Object> output = ServerUtils.buildThumbnailGallery(req, imgids, VerandaServer.configFile.getItemsPerRow());
+        HashMap<Integer, Object> output = ServerUtils.buildThumbnailGallery(req, pageitem.getPageContents(), VerandaServer.configFile.getItemsPerRow());
         // then, put the built mini-gallery into the page
         arttemp = arttemp.replace("${GALCONTENT}", (String) output.get(0));
         // some bonus code for handling filtered items
@@ -70,7 +84,22 @@ public class ArtistInfoServlet extends HttpServlet {
         } else {
             arttemp = arttemp.replace("${FILT_COUNT}", "");
         }
-        // TODO: deal with pagination
+        // do we need to do pagination
+        // we need the session to find out
+        SessionObject sesh = SessionUtils.getSessionDetails(req.getSession());
+        if (sesh.isUse_pagination()){
+            String oof = VerandaServer.template.getTemplate("navigation");
+            if (pageno == -1) pageno = 0;
+            oof = oof.replace("${SIMPLENAV}", ServerUtils.buildNavigation(pageitem, pageno, "/artist/?id=" + artist.getId()));
+            arttemp = arttemp.replace("${NAV}", oof);
+            // also show total number of items
+            arttemp = arttemp.replace("${IMGCOUNT}", "Showing " + pageitem.getPageContents().length + " of " + imgids_raw.length + " items");
+        } else {
+            // get rid of the navigation at the bottom
+            arttemp = arttemp.replace("${NAV}", "");
+            // also show total number of items
+            arttemp = arttemp.replace("${IMGCOUNT}", "Showing " + imgids_raw.length + " items");
+        }
         // once done, add it to the string builder
         page.append(arttemp);
         // finish the page up
