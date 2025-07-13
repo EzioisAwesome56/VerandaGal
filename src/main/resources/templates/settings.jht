@@ -9,6 +9,8 @@
 	<input type="checkbox" id="extraspicy" name="extraspicy" ${ESPICE}><br>
 	<label for="ai">Show AI generated images:</label>
 	<input type="checkbox" id="ai" name="ai" ${AI}><br>
+	<label for="itemrow">Number of items per row:</label>
+	<input id="itemrow" name="itemrow" type="number" value="${ITEMROW}" min="3"><br>
 	<input type="submit" value="Save settings">
 </form>
 ${STATUS}

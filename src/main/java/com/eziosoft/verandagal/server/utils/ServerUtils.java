@@ -195,8 +195,19 @@ public class ServerUtils {
                 filter_count++;
             }
         }
+        // NEW FEATURE: customizable items per row!
+        // variable for later
+        int real_itemsrow = items_per_row;
+        // get the session of the user
+        HttpSession httpsession = req.getSession();
+        SessionObject sesh = SessionUtils.getSessionDetails(httpsession);
+        // check if its not equal to the default
+        if (sesh.getItemsperrow() != items_per_row){
+            // update the value with whatever is stored
+            real_itemsrow = sesh.getItemsperrow();
+        }
         // more stolen code for building the gallery view
-        List<Object[]> splitobjs = ServerUtils.splitList(items_per_row, filtered);
+        List<Object[]> splitobjs = ServerUtils.splitList(real_itemsrow, filtered);
         // loop thru this
         StringBuilder tablebuilder = new StringBuilder();
         for (Object[] array : splitobjs){

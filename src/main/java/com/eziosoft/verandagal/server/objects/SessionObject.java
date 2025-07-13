@@ -1,5 +1,7 @@
 package com.eziosoft.verandagal.server.objects;
 
+import com.eziosoft.verandagal.server.VerandaServer;
+
 public class SessionObject {
 
     // set all of the values here
@@ -8,6 +10,7 @@ public class SessionObject {
     private boolean show_spicy;
     private boolean show_extra_spicy;
     private boolean show_ai;
+    private int itemsperrow;
 
     public boolean isShow_ai() {
         return show_ai;
@@ -41,11 +44,21 @@ public class SessionObject {
         this.show_spicy = show_spicy;
     }
 
+    public int getItemsperrow() {
+        return this.itemsperrow;
+    }
+
+    public void setItemsperrow(int itemsperrow) {
+        this.itemsperrow = itemsperrow;
+    }
+
     public void setDefaults(){
         // set the default settings
         this.show_ai = false;
         this.show_normal = false;
         this.show_spicy = false;
         this.show_extra_spicy = false;
+        // set the default to the one in the config file
+        this.itemsperrow = VerandaServer.configFile.getItemsPerRow();
     }
 }

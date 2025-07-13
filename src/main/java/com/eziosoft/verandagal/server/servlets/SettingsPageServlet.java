@@ -24,6 +24,7 @@ public class SettingsPageServlet  extends HttpServlet {
         SessionObject obj = SessionUtils.getSessionDetails(session);
         // setup a bunch of booleans
         boolean normal = false, spicy = false, extraspicy = false, ai = false;
+        String itemsperrow = "";
         for (Map.Entry<String, String[]> thing : req.getParameterMap().entrySet()){
             switch (thing.getKey()) {
                 case "normal" -> {
@@ -42,6 +43,10 @@ public class SettingsPageServlet  extends HttpServlet {
                     ai = true;
                     continue;
                 }
+                case "itemrow" -> {
+                    itemsperrow = thing.getValue()[0];
+                    continue;
+                }
             }
         }
         // then, once we have everything, update the session
@@ -49,6 +54,18 @@ public class SettingsPageServlet  extends HttpServlet {
         obj.setShow_extra_spicy(extraspicy);
         obj.setShow_normal(normal);
         obj.setShow_spicy(spicy);
+        // we have a field that accepts user input, so we have to do some defensive programming
+        int itemsrow;
+        try {
+            itemsrow = Integer.parseInt(itemsperrow);
+            // make sure that shit isnt negative
+            if (itemsrow < 1) itemsrow = 1;
+        } catch (Exception e){
+            // somebody tried to input something invalid, reset it to default
+            itemsrow = VerandaServer.configFile.getItemsPerRow();
+        }
+        // update the value in the session
+        obj.setItemsperrow(itemsrow);
         // write updated session
         SessionUtils.updateSessionDetails(session, obj);
         // get the page
@@ -91,6 +108,7 @@ public class SettingsPageServlet  extends HttpServlet {
         settings_page = settings_page.replace("${SPICE}", seshobj.isShow_spicy() ? "checked" : "");
         settings_page = settings_page.replace("${ESPICE}", seshobj.isShow_extra_spicy() ? "checked" : "");
         settings_page = settings_page.replace("${AI}", seshobj.isShow_ai() ? "checked" : "");
+        settings_page = settings_page.replace("${ITEMROW}", Integer.toString(seshobj.getItemsperrow()));
         b.append(settings_page);
         b.append(VerandaServer.template.getTemplate("footer"));
         return b.toString();
