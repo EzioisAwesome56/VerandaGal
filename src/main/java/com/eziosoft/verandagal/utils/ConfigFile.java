@@ -19,6 +19,12 @@ public class ConfigFile {
     private final boolean DontUsePreviews;
     private final boolean pageinationdefault;
     private final int itemsperpage;
+    // more database options
+    private final boolean useH2;
+    private final String maria_user;
+    private final String maria_pass;
+    private final String maria_dbname;
+    private final String maria_host;
 
     public boolean isShowStockFAQ() {
         return this.showStockFAQ;
@@ -81,6 +87,22 @@ public class ConfigFile {
     public int getItemsperpage() {
         return this.itemsperpage;
     }
+    public boolean isUseH2() {
+        return this.useH2;
+    }
+    public String getMaria_pass() {
+        return this.maria_pass;
+    }
+    public String getMaria_dbname() {
+        return this.maria_dbname;
+    }
+    public String getMaria_user() {
+        return this.maria_user;
+    }
+
+    public String getMaria_host() {
+        return this.maria_host;
+    }
 
     public ConfigFile(){
         // make a blank config file with default values
@@ -101,5 +123,10 @@ public class ConfigFile {
         this.DontUsePreviews = false;
         this.pageinationdefault = false;
         this.itemsperpage = 40;
+        this.useH2 = true;
+        this.maria_dbname = "verandagal";
+        this.maria_pass = "password";
+        this.maria_user = "username";
+        this.maria_host = "localhost";
     }
 }
