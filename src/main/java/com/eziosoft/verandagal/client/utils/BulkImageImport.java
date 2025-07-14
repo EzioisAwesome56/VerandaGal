@@ -208,6 +208,7 @@ public class BulkImageImport {
      * 0 - unknown source
      * 1 - pixiv
      * 2 - deviantart
+     * 3 - unknown, but artist name can be extracted
      */
     private static int parseFilename(String filename){
         // set to all lowercase for sanity
@@ -232,11 +233,17 @@ public class BulkImageImport {
             }
         }
         if (sane.contains("_by_")){
-            // file is probably from deviantart
-            // DA puts a _by_<artist> at the end of downloads from their site
-            // no further checking is really required for this
-            log.info("File {} is likely from deviantart based on filename", filename);
-            return 2;
+            // File could be from a couple of places, we can narrow it down
+            // the only other example ive seen is _drawn_by_ which is not the DA format
+            if (sane.contains("_drawn_by_")){
+                log.info("File {} has unknown source, but contains artist info");
+                return 3;
+            } else {
+                // DA puts a _by_<artist> at the end of downloads from their site
+                // no further checking is really required for this
+                log.info("File {} is likely from deviantart based on filename", filename);
+                return 2;
+            }
         }
         // default case; no site was found
         return 0;
@@ -370,6 +377,8 @@ public class BulkImageImport {
             long artistid;
             if (site == 2){
                 artistid = parseDAFilenameForArtist(name, artists);
+            } else if (site == 3){
+                artistid = parseGenericFilenameForArtist(name, artists);
             } else {
                 // we have no idea, default to bulkid
                 artistid = bulkid;
@@ -483,6 +492,57 @@ public class BulkImageImport {
         pack.setUploadDate(uploaddate);
         // return that object
         return pack;
+    }
+
+    /**
+     * this is pretty much a copy paste from the DA filename parser, just
+     * we dont set an artist URL at the end
+     * @param name filename to parse
+     * @param artists artists file from db
+     * @return artist id
+     */
+    private static long parseGenericFilenameForArtist(String name, ImportableArtistsFile artists){
+        // start by making the entire filename lowercase
+        // remove file extension from artist names
+        String sane = FilenameUtils.getBaseName(name.toLowerCase());
+        // split via _by_
+        String[] firstsplit = sane.split("_drawn_by_");
+        // split again by _ to remove the extra crap
+        String[] oofsplit = firstsplit[1].split("_");
+        // we now need a third split, to get rid of trailing -
+        // based on https://stackoverflow.com/a/20905080
+        int i = oofsplit[0].lastIndexOf("-");
+        // HOTFIX: skip this part if i is -1
+        String thesplit;
+        if (i != -1){
+            thesplit = oofsplit[0].substring(0, i);
+        } else {
+            thesplit = oofsplit[0];
+        }
+        log.debug("Found artist name: {}", thesplit);
+        long artid = -1;
+        // try and find it
+        for (Map.Entry<Long, ArtistEntry> ent : artists.getArtists().entrySet()){
+            if (ent.getValue().getName().toLowerCase().equals(thesplit)){
+                // it exists, get the value and yeet
+                artid = ent.getKey();
+                break;
+            }
+        }
+        // if we have something, return that, otherwise make a new artist
+        if (artid <= -1) {
+            // we have to make a new artist, so do that
+            log.info("Creating new artist: {}", thesplit);
+            ArtistEntry artent = new ArtistEntry();
+            artent.setName(thesplit);
+            artent.setNotes("Automatically created by bulk importer from a generic filename");
+            // get our new artid
+            artid = artists.getArtists().size() + 1;
+            // add our artist
+            artists.addArtist(artid, artent);
+            // return our new value
+        }
+        return artid;
     }
 
     /**
