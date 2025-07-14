@@ -270,4 +270,13 @@ public class ServerUtils {
     public static String buildPageCount(ItemPage page, int cur_page){
         return "Page " + cur_page + " of " + (page.getTotal_pages() - 1);
     }
+
+    public static String buildURLifRequired(String url){
+        // check if it starts with the thing we need
+        if (url.toLowerCase().startsWith("http")){
+            return "<a href=\"" + url + "\">" + url + "</a>";
+        } else {
+            return url;
+        }
+    }
 }

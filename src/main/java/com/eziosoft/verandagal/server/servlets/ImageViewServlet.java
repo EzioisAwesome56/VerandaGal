@@ -122,7 +122,7 @@ public class ImageViewServlet extends HttpServlet {
             // this information was loaded eariler, because things above needed it
             imgview = imgview.replace("${PACK}", packname);
             // these are stored with the image so we can just write them asap
-            imgview = imgview.replace("${URL}", ourimage.getSourceurl());
+            imgview = imgview.replace("${URL}", ServerUtils.buildURLifRequired(ourimage.getSourceurl()));
             imgview = imgview.replace("${RATING}", ServerUtils.getRatingText(ourimage.getRating()));
             // this was broken away from the built in rating system
             // so now we have to display it seperately
