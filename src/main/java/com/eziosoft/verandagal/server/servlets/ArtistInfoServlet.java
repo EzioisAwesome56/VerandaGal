@@ -59,6 +59,10 @@ public class ArtistInfoServlet extends HttpServlet {
         // we now have to build the url list for this artist
         StringBuilder urls = new StringBuilder();
         for (String s : artist.getUrls()){
+            // dumb fix: if the first url is just "none", bail instantly
+            if (s.equals("none")){
+                break;
+            }
             // TODO: find/add a way to display text here besides just "link"
             urls.append("<li><a href=\"").append(s).append("\">Link</a></li>");
         }

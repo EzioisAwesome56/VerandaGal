@@ -536,6 +536,8 @@ public class BulkImageImport {
             ArtistEntry artent = new ArtistEntry();
             artent.setName(thesplit);
             artent.setNotes("Automatically created by bulk importer from a generic filename");
+            // this explodes if we dont put a url here so, do that
+            artent.setUrls(new String[]{"none"});
             // get our new artid
             artid = artists.getArtists().size() + 1;
             // add our artist
