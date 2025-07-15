@@ -81,6 +81,7 @@ public class ImageImportWorker implements Runnable{
                 } catch (IOException e) {
                     this.log.error("Error while trying to write preview webp file");
                     this.log.error(e);
+                    this.log.error("Affected file is: {}", job.getFilename());
                 }
             }
             // now we have to write the thumbnail into the database

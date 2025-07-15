@@ -1,5 +1,6 @@
 package com.eziosoft.verandagal.client.utils;
 
+import com.eziosoft.verandagal.Main;
 import com.luciad.imageio.webp.WebPWriteParam;
 import org.apache.commons.io.FilenameUtils;
 
@@ -56,7 +57,13 @@ public class ImageUtils {
         iwp.setCompressionType(iwp.getCompressionTypes()[WebPWriteParam.LOSSY_COMPRESSION]);
         iwp.setCompressionQuality(0.45f);
         webp.setOutput(imgstream);
-        webp.write(null, new IIOImage(img, null, null), iwp);
+        try {
+            webp.write(null, new IIOImage(img, null, null), iwp);
+        } catch (NullPointerException e){
+            Main.LOGGER.error("Webp image preview failed to write");
+            Main.LOGGER.error(e);
+            return null;
+        }
         webp.dispose();
         imgstream.close();
         // with everything done, convert output stream to byte[]
