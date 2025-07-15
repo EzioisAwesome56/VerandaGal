@@ -145,7 +145,7 @@ public class BulkImageImport {
             File ogsource = new File(srcfolder, bulk.getFilename());
             // verify it exists
             if (!ogsource.exists()){
-                log.error("ERROR: somehow, the file {} has gone missing! skipping, this will probably break everything!");
+                log.error("ERROR: somehow, the file {} has gone missing! skipping, this will probably break everything!", ogsource.getAbsolutePath());
                 continue;
             }
             // read it with imageio
