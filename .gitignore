@@ -45,3 +45,4 @@ config.json
 /images
 artists.json
 /src/test
+/dependency-reduced-pom.xml
