@@ -152,6 +152,11 @@ public class BulkImageImport {
             BufferedImage temp;
             try {
                 temp = ImageIO.read(ogsource);
+                // HOTFIX: encountered this on a mystry file. bail if its null
+                if (temp == null){
+                    log.error("File {} failed to read? its null but no exception was thrown...", ogsource);
+                    continue;
+                }
             } catch (IOException e){
                 // what happened?
                 log.error("Something broke while trying to read in file {}, skipping", bulk.getFilename());
