@@ -83,6 +83,12 @@ public class ImageImportWorker implements Runnable{
                     this.log.error(e);
                     this.log.error("Affected file is: {}", job.getFilename());
                 }
+            } else {
+                // this is something i have encountered in further testing, so we will write an error about this
+                if (!this.config.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(job.getFilename())){
+                    this.log.error("Image that needs preview failed to generate any bytes");
+                    this.log.error("Effected file: {}", job.getFilename());
+                }
             }
             // now we have to write the thumbnail into the database
             Thumbnail thumbnailent = new Thumbnail();
