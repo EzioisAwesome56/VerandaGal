@@ -180,12 +180,18 @@ public class BulkImageImport {
         // now, we should have a list of jobs
         log.info("Number of image jobs: {}", imagejobs.size());
         // now we need to get setup for threading stuff
-        // 4 threads should be enough, TODO: allow for custom number of threads
-        int numthreads = 4;
+        // we will get the number of threads, minus 1
+        int numthreads = Runtime.getRuntime().availableProcessors() - 1;
+        // THIS SHOULDNT HAPPEN BUT IM PARANOID
+        if (numthreads < 1){
+            log.warn("Somehow, the math came out to 0 threads. Setting to 1, but it will be slow");
+            numthreads = 1;
+        }
+        log.info("Number of threads to be used: {}", numthreads);
         CountDownLatch latch = new CountDownLatch(numthreads);
         ExecutorService executor = Executors.newFixedThreadPool(numthreads);
         ArrayList<ArrayList> jobslist = ClientUtils.splitToXLists(numthreads, imagejobs);
-        log.debug("asked for 4 lists, got {} lists", jobslist.size());
+        log.debug("asked for {} lists, got {} lists", numthreads, jobslist.size());
         // execute all the threads now
         for (int i = 0; i < numthreads; i++){
             log.info("Starting thread no. {}", i);
@@ -632,7 +638,13 @@ public class BulkImageImport {
         }
         if (count >= 1) {
             // then, we need to remove all the other garbage text after the artist name
-            Pattern after_art = Pattern.compile("_[A-Za-z0-9]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
+            Pattern after_art;
+            // check to see if it has a reuploader listed
+            if (dank.contains("_by_")){
+                after_art = Pattern.compile("_by_[A-Za-z0-9]+_[A-Za-z0-9]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
+            } else {
+                after_art = Pattern.compile("_[A-Za-z0-9]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
+            }
             match = after_art.matcher(dank);
             if (match.find()) {
                 // remove the match from the string
