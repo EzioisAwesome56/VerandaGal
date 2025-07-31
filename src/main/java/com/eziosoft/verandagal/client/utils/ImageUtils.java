@@ -3,6 +3,8 @@ package com.eziosoft.verandagal.client.utils;
 import com.eziosoft.verandagal.Main;
 import com.luciad.imageio.webp.WebPWriteParam;
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -11,11 +13,14 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
 public class ImageUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(ImageUtils.class);
 
     /**
      * load an image from a file, and remove its alpha transparency if any exists
@@ -55,6 +60,36 @@ public class ImageUtils {
         tempgfx.dispose();
         // return our normalized image
         return temp;
+    }
+
+    /**
+     * tries to fix weird images by converting to jpeg also
+     * @param in buffered image to convert
+     * @return jpeg'd buffered image
+     */
+    public static BufferedImage normalizeImageviaJPEG(BufferedImage in) throws IOException{
+        // run the original normalize function just to be safe
+        BufferedImage temp = normalizeImage(in);
+        // create a new stream to use
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        // convert to jpeg
+            ImageOutputStream imgstream = ImageIO.createImageOutputStream(stream);
+            ImageWriter jpg = ImageIO.getImageWritersByFormatName("jpeg").next();
+            ImageWriteParam iwp = jpg.getDefaultWriteParam();
+            // we dont need to set any custom params so
+            jpg.setOutput(imgstream);
+            jpg.write(null, new IIOImage(temp, null, null), iwp);
+            jpg.dispose();
+            imgstream.close();
+            // get our content before closing the stream
+            byte[] content = stream.toByteArray();
+            // now close the stream
+            stream.close();
+            // read it back in using imageio
+            ByteArrayInputStream input = new ByteArrayInputStream(content);
+            temp = ImageIO.read(input);
+            // return that
+            return temp;
     }
 
     /**

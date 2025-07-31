@@ -69,7 +69,13 @@ public class ImageImportWorker implements Runnable{
                     // if its null, we can try again before permanetly giving up
                     // but first we normalize it
                     if (previewbytes == null){
+                        log.warn("Preview bytes are null, attempting normalization");
                         previewbytes = ImageUtils.generateImagePreview(ImageUtils.normalizeImage(temp));
+                    }
+                    // check if its still null, and try the other way to fix an image
+                    if (previewbytes == null){
+                        log.warn("Preview bytes still null, trying to jpeg the image");
+                        previewbytes = ImageUtils.generateImagePreview(ImageUtils.normalizeImageviaJPEG(temp));
                     }
                 }
                 thumbnailbytes = ImageProcessor.generateThumbnail(temp);
