@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Random;
 
 public class APIHandlerServlet extends HttpServlet {
 
@@ -51,7 +52,7 @@ public class APIHandlerServlet extends HttpServlet {
         } catch (Exception e){
             // do we actually have to give a shit?
             switch (action_id){
-                case 1, 3 -> {}
+                case 1, 3, 5 -> {}
                 default -> {
                     displayAPIHelp(req, resp);
                     return;
@@ -75,6 +76,9 @@ public class APIHandlerServlet extends HttpServlet {
             }
             case 4 -> {
                 doArtistInformationRequest(req, resp, objid);
+            }
+            case 5 -> {
+                doRandomImageRequest(req, resp);
             }
             default -> {
                 // assume incorrect/malformed api call
@@ -118,7 +122,7 @@ public class APIHandlerServlet extends HttpServlet {
      */
     private static void doImageAPIRequest(HttpServletRequest req, HttpServletResponse resp, long imageid) throws IOException {
         // set content type
-        resp.setContentType("application/json");
+        resp.setContentType("application/json; charset=UTF-8");
         // attempt to get the image from the database
         Image theimage = VerandaServer.maindb.LoadObject(Image.class, imageid);
         // check if its valid
@@ -311,6 +315,58 @@ public class APIHandlerServlet extends HttpServlet {
         // once done, turn it into a string
         String json = Main.gson_pretty.toJson(apiresp);
         // and then send it
+        AsyncContext cxt = req.startAsync();
+        ServletOutputStream out = resp.getOutputStream();
+        out.setWriteListener(new BasicTextWriter(json, cxt, out));
+    }
+
+    /**
+     * tries to get a random image from the db and displays it
+     * @param req http request
+     * @param resp http response
+     * @throws IOException if something goes terribly wrong
+     */
+    private static void doRandomImageRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        // set content type to json
+        resp.setContentType("application/json; charset=UTF-8");
+        // borrow some code from the random image servlet
+        long numimgs = VerandaServer.maindb.getCountOfRecords(Image.class);
+        // check it didnt fail
+        if (numimgs == 0){
+            resp.setStatus(500);
+            AsyncContext cxt = req.startAsync();
+            ServletOutputStream out = resp.getOutputStream();
+            out.setWriteListener(new BasicTextWriter("{\"error\": \"There are no images\"", cxt, out));
+            return;
+        }
+        // pick an image
+        Random random = new Random();
+        long destid = random.nextLong(numimgs) + 1L;
+        // load the image
+        Image img = VerandaServer.maindb.LoadObject(Image.class, destid);
+        // make sure its not null; it shouldnt be but
+        if (img == null){
+            // bail
+            VerandaServer.LOGGER.error("Somehow, an invalid image id was randomly generated: {}", destid);
+            doError(req, resp);
+            return;
+        }
+        // reuse some code from the regular image api endpoint
+        // first, we have to build our object
+        ImageAPIResponse apiresp = new ImageAPIResponse();
+        apiresp.setImg(img);
+        // attempt to load the image pack for this image
+        ImagePack pack = VerandaServer.packinfo.getImagePack(img.getPackid());
+        String addpath = "/img/";
+        if (pack != null){
+            addpath += pack.getFsdir() + "/";
+        }
+        // build the main url for the image
+        apiresp.addURL(addpath + img.getFilename());
+        // also append the thumbnail url
+        apiresp.addURL("/thumb/?id=" + img.getId());
+        // then we can send this object to the user
+        String json = Main.gson_pretty.toJson(apiresp);
         AsyncContext cxt = req.startAsync();
         ServletOutputStream out = resp.getOutputStream();
         out.setWriteListener(new BasicTextWriter(json, cxt, out));

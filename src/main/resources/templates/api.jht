@@ -80,4 +80,9 @@
 			</ul></li>
 			<li><b>"images" json field:</b> an array with every image id belonging to this artist in it</li>
 		</ul>
+	<hr>
+    		<h2>Random Image Endpoint</h2>
+    		<b>Required aid value:</b> 5<br>
+    		<b>Requires oid:</b> no<br>
+    		<b>Response format:</b> see format for Image Information Endpoint
 </div>
