@@ -163,10 +163,6 @@ public class BulkImageImport {
             imagejobs.add(job);
             log.info("Imported image {} into database", dbent.getFilename());
         }
-        /* FIX: because we have more threads, sqlite may start locking out writes
-        as a fix, we will now store all the thumbnails queued in a list and write them all at once
-         */
-        List<Thumbnail> thumbnail_queue = Collections.synchronizedList(new ArrayList<>());
         // now, we should have a list of jobs
         log.info("Number of image jobs: {}", imagejobs.size());
         // now we need to get setup for threading stuff
@@ -185,7 +181,7 @@ public class BulkImageImport {
         // execute all the threads now
         for (int i = 0; i < numthreads; i++){
             log.info("Starting thread no. {}", i);
-            executor.execute(new ImageImportWorker(latch, jobslist.get(i), thumbnail, config, maindb, thumbnail_queue));
+            executor.execute(new ImageImportWorker(latch, jobslist.get(i), thumbnail, config, maindb));
         }
         // apparently we need to shutdown the executor now
         executor.shutdown();
@@ -196,15 +192,6 @@ public class BulkImageImport {
             log.error("Something went wrong while waiting for threads to finish!");
             log.error(e);
             log.error("Continuing anyway, but stuff may be broken");
-        }
-        // once the threads are done, check to see how many thumbnail jobs we have
-        if (thumbnail_queue.size() != imagejobs.size()){
-            log.warn("Somehow, there are less thumbnails then images! Thumbnails: {}, Images: {}", thumbnail_queue.size(), imagejobs.size());
-        }
-        // import them
-        log.info("Now importing thumbnails into the thumbnail store...");
-        for (Thumbnail thumb : thumbnail_queue){
-            thumbnail.MergeThumbnail(thumb);
         }
 
         log.info("Done importing images. enjoy!");

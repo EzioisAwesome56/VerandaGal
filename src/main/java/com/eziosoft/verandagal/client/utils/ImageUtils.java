@@ -13,7 +13,6 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -51,45 +50,31 @@ public class ImageUtils {
      * @return normalized image
      */
     public static BufferedImage normalizeImage(BufferedImage in){
+        /* part of the problem seems to be if the image is far too large
+        debugging it just showed fucked up pixels
+        so part of the normalizing process will divide the resolution by 2 (or three)
+         */
+        int factor;
+        if (in.getHeight() > 18000){
+            factor = 3;
+            log.warn("Image height exceeds 18000 pixels!");
+        } else {
+            factor = 2;
+        }
+        int new_width = Math.floorDiv(in.getWidth(), factor);
+        int new_height = Math.floorDiv(in.getHeight(), factor);
         // create new buffered image
-        BufferedImage temp = new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D tempgfx = temp.createGraphics();
-        // draw it
-        tempgfx.drawImage(in, 0, 0, null);
+        BufferedImage temp = new BufferedImage(new_width, new_height, BufferedImage.TYPE_3BYTE_BGR);
+        // get a scaled instance of the original image
+        Image hi = in.getScaledInstance(new_width, new_height, BufferedImage.SCALE_FAST);
+        // use graphics 2d to apply it to the new image
+        Graphics2D g2d = temp.createGraphics();
+        g2d.drawImage(hi, 0, 0, null);
+        g2d.dispose();
         // clean up
-        tempgfx.dispose();
-        // return our normalized image
+        hi.flush();
+        hi = null;
         return temp;
-    }
-
-    /**
-     * tries to fix weird images by converting to jpeg also
-     * @param in buffered image to convert
-     * @return jpeg'd buffered image
-     */
-    public static BufferedImage normalizeImageviaJPEG(BufferedImage in) throws IOException{
-        // run the original normalize function just to be safe
-        BufferedImage temp = normalizeImage(in);
-        // create a new stream to use
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        // convert to jpeg
-            ImageOutputStream imgstream = ImageIO.createImageOutputStream(stream);
-            ImageWriter jpg = ImageIO.getImageWritersByFormatName("jpeg").next();
-            ImageWriteParam iwp = jpg.getDefaultWriteParam();
-            // we dont need to set any custom params so
-            jpg.setOutput(imgstream);
-            jpg.write(null, new IIOImage(temp, null, null), iwp);
-            jpg.dispose();
-            imgstream.close();
-            // get our content before closing the stream
-            byte[] content = stream.toByteArray();
-            // now close the stream
-            stream.close();
-            // read it back in using imageio
-            ByteArrayInputStream input = new ByteArrayInputStream(content);
-            temp = ImageIO.read(input);
-            // return that
-            return temp;
     }
 
     /**

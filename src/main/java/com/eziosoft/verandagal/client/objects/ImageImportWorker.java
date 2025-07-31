@@ -35,15 +35,13 @@ public class ImageImportWorker implements Runnable{
     private final MainDatabase maindb;
     private final ConfigFile config;
     private final Logger log = LogManager.getLogger("Image Worker Thread");
-    private final List<Thumbnail> thumbnail_queue;
 
-    public ImageImportWorker(CountDownLatch latch, List<ImageImportJob> jobs, ThumbnailStore store, ConfigFile file, MainDatabase main, List<Thumbnail> queue){
+    public ImageImportWorker(CountDownLatch latch, List<ImageImportJob> jobs, ThumbnailStore store, ConfigFile file, MainDatabase main){
         this.latch = latch;
         this.jobs = jobs;
         this.config = file;
         this.thumbnails = store;
         this.maindb = main;
-        this.thumbnail_queue = queue;
     }
 
     @Override
@@ -86,11 +84,6 @@ public class ImageImportWorker implements Runnable{
                         log.warn("Preview bytes are null, attempting normalization");
                         previewbytes = ImageUtils.generateImagePreview(ImageUtils.normalizeImage(temp));
                     }
-                    // check if its still null, and try the other way to fix an image
-                    if (previewbytes == null){
-                        log.warn("Preview bytes still null, trying to jpeg the image");
-                        previewbytes = ImageUtils.generateImagePreview(ImageUtils.normalizeImageviaJPEG(temp));
-                    }
                 }
                 thumbnailbytes = ImageProcessor.generateThumbnail(temp);
             } catch (IOException e){
@@ -125,14 +118,11 @@ public class ImageImportWorker implements Runnable{
             thumbnailent.setImagedata(thumbnailbytes);
             // since we are doing this threaded and it may insert out of order, set an ID manually
             thumbnailent.setId(job.getId());
-            // write to the database
-            //this.thumbnails.MergeThumbnail(thumbnailent);
-            // actually dont do that, write to queue instead
-            this.thumbnail_queue.add(thumbnailent);
-            // TODO: i dont think this sanity check applies anymore? look into this
-            // TODO again: i really dont think this matters
-            if (thumbnailent.getId() != job.getId()){
-                this.log.warn("Thumbnail db id does not match image id in database. something may be wrong");
+            /* write to the database
+            but do it in a sync block to maybe prevent database locks?
+             */
+            synchronized (this.thumbnails){
+                this.thumbnails.MergeThumbnail(thumbnailent);
             }
             // now we just need to move the file
             try {
