@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -37,6 +38,23 @@ public class ImageUtils {
         BufferedImage bi2 = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         bi2.setRGB(0, 0, w, h, pixels, 0, w);
         return bi2;
+    }
+
+    /**
+     * normalizes troublesome images, incase they decide to be weird for some reason
+     * @param in weird image
+     * @return normalized image
+     */
+    public static BufferedImage normalizeImage(BufferedImage in){
+        // create new buffered image
+        BufferedImage temp = new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D tempgfx = temp.createGraphics();
+        // draw it
+        tempgfx.drawImage(in, 0, 0, null);
+        // clean up
+        tempgfx.dispose();
+        // return our normalized image
+        return temp;
     }
 
     /**

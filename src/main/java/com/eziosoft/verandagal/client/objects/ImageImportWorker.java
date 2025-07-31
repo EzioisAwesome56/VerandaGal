@@ -66,6 +66,11 @@ public class ImageImportWorker implements Runnable{
                 // webp previews may be disabled, dont waste diskspace if they are
                 if (!this.config.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(job.getFilename())){
                     previewbytes = ImageUtils.generateImagePreview(temp);
+                    // if its null, we can try again before permanetly giving up
+                    // but first we normalize it
+                    if (previewbytes == null){
+                        previewbytes = ImageUtils.generateImagePreview(ImageUtils.normalizeImage(temp));
+                    }
                 }
                 thumbnailbytes = ImageProcessor.generateThumbnail(temp);
             } catch (IOException e){
