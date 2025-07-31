@@ -78,6 +78,8 @@ public class BulkImageImport {
             // otherwise, add it to our list
             supportedfiles.add(f);
         }
+        // sort the files, to hopefully get them in the right order
+        Collections.sort(supportedfiles);
         // done sorting shit
         log.info("File detection done; found {} supported image files", supportedfiles.size());
         // get a copy of the config file
