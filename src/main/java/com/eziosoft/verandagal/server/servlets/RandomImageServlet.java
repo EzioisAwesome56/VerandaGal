@@ -20,11 +20,11 @@ public class RandomImageServlet extends HttpServlet {
         // get how many images we have in the database
         long numimgs = VerandaServer.maindb.getCountOfRecords(Image.class);
         // check it didnt fail
-        if (numimgs == -1){
+        if (numimgs == 0){
             resp.setStatus(500);
             AsyncContext cxt = req.startAsync();
             ServletOutputStream out = resp.getOutputStream();
-            out.setWriteListener(new BasicTextWriter("Request failed", cxt, out));
+            out.setWriteListener(new BasicTextWriter("There are no images to select from randomly", cxt, out));
             return;
         }
         // otherwise, do some random number shit
