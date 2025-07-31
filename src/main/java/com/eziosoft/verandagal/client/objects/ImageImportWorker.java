@@ -2,7 +2,9 @@ package com.eziosoft.verandagal.client.objects;
 
 import com.eziosoft.verandagal.client.utils.ImageProcessor;
 import com.eziosoft.verandagal.client.utils.ImageUtils;
+import com.eziosoft.verandagal.database.MainDatabase;
 import com.eziosoft.verandagal.database.ThumbnailStore;
+import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.Thumbnail;
 import com.eziosoft.verandagal.utils.ConfigFile;
 import org.apache.commons.io.FileUtils;
@@ -10,11 +12,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -28,14 +32,18 @@ public class ImageImportWorker implements Runnable{
     private final CountDownLatch latch;
     private final List<ImageImportJob> jobs;
     private final ThumbnailStore thumbnails;
+    private final MainDatabase maindb;
     private final ConfigFile config;
     private final Logger log = LogManager.getLogger("Image Worker Thread");
+    private final List<Thumbnail> thumbnail_queue;
 
-    public ImageImportWorker(CountDownLatch latch, List<ImageImportJob> jobs, ThumbnailStore store, ConfigFile file){
+    public ImageImportWorker(CountDownLatch latch, List<ImageImportJob> jobs, ThumbnailStore store, ConfigFile file, MainDatabase main, List<Thumbnail> queue){
         this.latch = latch;
         this.jobs = jobs;
         this.config = file;
         this.thumbnails = store;
+        this.maindb = main;
+        this.thumbnail_queue = queue;
     }
 
     @Override
@@ -59,6 +67,12 @@ public class ImageImportWorker implements Runnable{
                 this.log.error(e);
                 continue;
             }
+            // now that we have read in the file, we need to update the main db really quickly
+            Image maindb_ent = this.maindb.LoadObject(Image.class, job.getId());
+            // update the image resolution data in the object
+            maindb_ent.setImageres(temp.getWidth() + "x" + temp.getHeight());
+            // update it
+            this.maindb.UpdateObject(maindb_ent);
             // create a preview for it
             byte[] previewbytes = null;
             byte[] thumbnailbytes = null;
@@ -112,8 +126,11 @@ public class ImageImportWorker implements Runnable{
             // since we are doing this threaded and it may insert out of order, set an ID manually
             thumbnailent.setId(job.getId());
             // write to the database
-            this.thumbnails.MergeThumbnail(thumbnailent);
+            //this.thumbnails.MergeThumbnail(thumbnailent);
+            // actually dont do that, write to queue instead
+            this.thumbnail_queue.add(thumbnailent);
             // TODO: i dont think this sanity check applies anymore? look into this
+            // TODO again: i really dont think this matters
             if (thumbnailent.getId() != job.getId()){
                 this.log.warn("Thumbnail db id does not match image id in database. something may be wrong");
             }

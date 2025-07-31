@@ -118,6 +118,18 @@ public class MainDatabase {
         //return id;
     }
 
+    public void UpdateObject(Object obj){
+        // get a session
+        Session sesh = this.factory.openSession();
+        // also get a transaction
+        Transaction act = sesh.beginTransaction();
+        // merge the thing?
+        sesh.merge(obj);
+        // commit and yeet
+        act.commit();
+        sesh.close();
+    }
+
     public <T> T LoadObject(Class<T> type, long id){
         // make a session
         Session sesh = this.factory.openSession();

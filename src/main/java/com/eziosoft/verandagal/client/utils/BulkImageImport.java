@@ -9,6 +9,7 @@ import com.eziosoft.verandagal.database.MainDatabase;
 import com.eziosoft.verandagal.database.ThumbnailStore;
 import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
+import com.eziosoft.verandagal.database.objects.Thumbnail;
 import com.eziosoft.verandagal.server.utils.ServerUtils;
 import com.eziosoft.verandagal.utils.ConfigFile;
 import com.eziosoft.verandagal.utils.ConfigUtils;
@@ -17,7 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -152,23 +152,9 @@ public class BulkImageImport {
                 log.error("ERROR: somehow, the file {} has gone missing! skipping, this will probably break everything!", ogsource.getAbsolutePath());
                 continue;
             }
-            // read it with imageio
-            BufferedImage temp;
-            try {
-                temp = ImageIO.read(ogsource);
-                // HOTFIX: encountered this on a mystry file. bail if its null
-                if (temp == null){
-                    log.error("File {} failed to read? its null but no exception was thrown...", ogsource);
-                    continue;
-                }
-            } catch (IOException e){
-                // what happened?
-                log.error("Something broke while trying to read in file {}, skipping", bulk.getFilename());
-                log.error(e);
-                continue;
-            }
             // set the resolution
-            dbent.setImageres(temp.getWidth() + "x" + temp.getHeight());
+            // this is now handled elsewhere to speed everything up
+            dbent.setImageres("0x0");
             // then, we can import this image into the database
             maindb.SaveObject(dbent);
             // now we have an imageid!
@@ -177,6 +163,10 @@ public class BulkImageImport {
             imagejobs.add(job);
             log.info("Imported image {} into database", dbent.getFilename());
         }
+        /* FIX: because we have more threads, sqlite may start locking out writes
+        as a fix, we will now store all the thumbnails queued in a list and write them all at once
+         */
+        List<Thumbnail> thumbnail_queue = Collections.synchronizedList(new ArrayList<>());
         // now, we should have a list of jobs
         log.info("Number of image jobs: {}", imagejobs.size());
         // now we need to get setup for threading stuff
@@ -195,7 +185,7 @@ public class BulkImageImport {
         // execute all the threads now
         for (int i = 0; i < numthreads; i++){
             log.info("Starting thread no. {}", i);
-            executor.execute(new ImageImportWorker(latch, jobslist.get(i), thumbnail, config));
+            executor.execute(new ImageImportWorker(latch, jobslist.get(i), thumbnail, config, maindb, thumbnail_queue));
         }
         // apparently we need to shutdown the executor now
         executor.shutdown();
@@ -206,6 +196,15 @@ public class BulkImageImport {
             log.error("Something went wrong while waiting for threads to finish!");
             log.error(e);
             log.error("Continuing anyway, but stuff may be broken");
+        }
+        // once the threads are done, check to see how many thumbnail jobs we have
+        if (thumbnail_queue.size() != imagejobs.size()){
+            log.warn("Somehow, there are less thumbnails then images! Thumbnails: {}, Images: {}", thumbnail_queue.size(), imagejobs.size());
+        }
+        // import them
+        log.info("Now importing thumbnails into the thumbnail store...");
+        for (Thumbnail thumb : thumbnail_queue){
+            thumbnail.MergeThumbnail(thumb);
         }
 
         log.info("Done importing images. enjoy!");
