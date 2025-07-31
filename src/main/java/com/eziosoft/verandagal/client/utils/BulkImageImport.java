@@ -24,6 +24,8 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BulkImageImport {
 
@@ -244,7 +246,7 @@ public class BulkImageImport {
             // File could be from a couple of places, we can narrow it down
             // the only other example ive seen is _drawn_by_ which is not the DA format
             if (sane.contains("_drawn_by_")){
-                log.info("File {} has unknown source, but contains artist info");
+                log.info("File {} has unknown source, but contains artist info", filename);
                 return 3;
             } else {
                 // DA puts a _by_<artist> at the end of downloads from their site
@@ -519,28 +521,22 @@ public class BulkImageImport {
      * @return artist id
      */
     private static long parseGenericFilenameForArtist(String name, ImportableArtistsFile artists){
-        // start by making the entire filename lowercase
-        // remove file extension from artist names
-        String sane = FilenameUtils.getBaseName(name.toLowerCase());
-        // split via _by_
-        String[] firstsplit = sane.split("_drawn_by_");
-        // split again by _ to remove the extra crap
-        String[] oofsplit = firstsplit[1].split("_");
-        // we now need a third split, to get rid of trailing -
-        // based on https://stackoverflow.com/a/20905080
-        int i = oofsplit[0].lastIndexOf("-");
+        // run the filename thru our new filename parser
+        String thesplit = getArtistNameFromFilename(name.toLowerCase());
+        // HOTFIX: some files will end up with an extra _, so we need to get rid of that
+        int i = thesplit.lastIndexOf("_");
         // HOTFIX: skip this part if i is -1
-        String thesplit;
+        String magic;
         if (i != -1){
-            thesplit = oofsplit[0].substring(0, i);
+            magic = thesplit.substring(0, i);
         } else {
-            thesplit = oofsplit[0];
+            magic = thesplit;
         }
-        log.debug("Found artist name: {}", thesplit);
+        log.debug("Found artist name: {}", magic);
         long artid = -1;
         // try and find it
         for (Map.Entry<Long, ArtistEntry> ent : artists.getArtists().entrySet()){
-            if (ent.getValue().getName().toLowerCase().equals(thesplit)){
+            if (ent.getValue().getName().toLowerCase().equals(magic)){
                 // it exists, get the value and yeet
                 artid = ent.getKey();
                 break;
@@ -549,9 +545,9 @@ public class BulkImageImport {
         // if we have something, return that, otherwise make a new artist
         if (artid <= -1) {
             // we have to make a new artist, so do that
-            log.info("Creating new artist: {}", thesplit);
+            log.info("Creating new artist: {}", magic);
             ArtistEntry artent = new ArtistEntry();
-            artent.setName(thesplit);
+            artent.setName(magic);
             artent.setNotes("Automatically created by bulk importer from a generic filename");
             // this explodes if we dont put a url here so, do that
             artent.setUrls(new String[]{"none"});
@@ -572,23 +568,10 @@ public class BulkImageImport {
      * @return id of artist if found, or created. return bulkid on any errors
      */
     private static long parseDAFilenameForArtist(String name, ImportableArtistsFile artists){
-        // start by making the entire filename lowercase
-        // remove file extension from artist names
-        String sane = FilenameUtils.getBaseName(name.toLowerCase());
-        // split via _by_
-        String[] firstsplit = sane.split("_by_");
-        // split again by _ to remove the extra crap
-        String[] oofsplit = firstsplit[1].split("_");
-        // we now need a third split, to get rid of trailing -
-        // based on https://stackoverflow.com/a/20905080
-        int i = oofsplit[0].lastIndexOf("-");
-        // HOTFIX: skip this part if i is -1
-        String thesplit;
-        if (i != -1){
-            thesplit = oofsplit[0].substring(0, i);
-        } else {
-            thesplit = oofsplit[0];
-        }
+        // feed the filename into our new function, but make it all lowercase
+        String thesplit = getArtistNameFromFilename(name.toLowerCase());
+        // Deviantart doesnt allow spaces in filenames, so replace all remaining _s with -
+        thesplit = thesplit.replace("_", "-");
         log.debug("Found artist name: {}", thesplit);
         long artid = -1;
         // try and find it
@@ -614,6 +597,87 @@ public class BulkImageImport {
             // return our new value
         }
         return artid;
+    }
+
+    /**
+     * uses some stupid regex hacks to parse the information we need
+     * do NOT remove the file extension or else it will not work correctly
+     * @param input the filename of the file we want to parse
+     * @return string with artist name, "NULL" if failure
+     */
+    private static String getArtistNameFromFilename(String input){
+        String dank = input;
+        // remove -fullview for convience sake
+        dank = dank.replace("-fullview", "");
+        // do the first regex; this removes everything before the artist name
+        Pattern before_art = Pattern.compile("^.*? *_by_", Pattern.CASE_INSENSITIVE);
+        Matcher match = before_art.matcher(dank);
+        if (match.find()){
+            // if we have a match, get the match and then remove it from the string
+            dank = dank.replace(match.group(0), "");
+        } else {
+            // failure to match, abort
+            log.warn("Failure to match, filename is invalid? Affected file: {} Phase: 1", input);
+            return authorParseFallback(input);
+        }
+        // HOTFIX: some files dont have the garbage at the end we need to filter, so we need to
+        // account for this case
+        // we can abuse more regex for this
+        Pattern count_underscores = Pattern.compile("[\\_]*\\_", Pattern.CASE_INSENSITIVE);
+        match = count_underscores.matcher(dank);
+        // then we count the matches
+        int count = 0;
+        while (match.find()){
+            count++;
+        }
+        if (count >= 1) {
+            // then, we need to remove all the other garbage text after the artist name
+            Pattern after_art = Pattern.compile("_[A-Za-z0-9]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
+            match = after_art.matcher(dank);
+            if (match.find()) {
+                // remove the match from the string
+                dank = dank.replace(match.group(0), "");
+                // return the final result
+                return dank;
+            } else {
+                log.warn("Failure to match, filename is invalid? Affected file: {} Phase: 2", input);
+                return authorParseFallback(input);
+            }
+        } else {
+            // otherwise, just remove the file extension
+            return FilenameUtils.getBaseName(dank);
+        }
+    }
+
+    /**
+     * this is the old artist name parser from before the rewrite. here as a fallback
+     * @param input filename to parse
+     * @return parsed artist name
+     */
+    private static String authorParseFallback(String input){
+        // start by making the entire filename lowercase
+        // remove file extension from artist names
+        String sane = FilenameUtils.getBaseName(input.toLowerCase());
+        // split via _drawn_by_
+        String[] firstsplit = sane.split("_drawn_by_");
+        // if the split failed, try again with _by_
+        if (firstsplit.length < 2){
+            firstsplit = sane.split("_by_");
+        }
+        // split again by _ to remove the extra crap
+        String[] oofsplit = firstsplit[1].split("_");
+        // we now need a third split, to get rid of trailing -
+        // based on https://stackoverflow.com/a/20905080
+        int i = oofsplit[0].lastIndexOf("-");
+        // HOTFIX: skip this part if i is -1
+        String thesplit;
+        if (i != -1){
+            thesplit = oofsplit[0].substring(0, i);
+        } else {
+            thesplit = oofsplit[0];
+        }
+        // return what we found
+        return thesplit;
     }
 
     /**
