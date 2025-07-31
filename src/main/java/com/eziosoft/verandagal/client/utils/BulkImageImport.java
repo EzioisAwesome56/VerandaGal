@@ -214,6 +214,7 @@ public class BulkImageImport {
      * 1 - pixiv
      * 2 - deviantart
      * 3 - unknown, but artist name can be extracted
+     * 4 - pixiv, downloaded from mobile app
      */
     private static int parseFilename(String filename){
         // set to all lowercase for sanity
@@ -248,6 +249,15 @@ public class BulkImageImport {
                 // no further checking is really required for this
                 log.info("File {} is likely from deviantart based on filename", filename);
                 return 2;
+            }
+        }
+        if (sane.contains("illust_")){
+            // all pixiv mobile filenames have 4 sections of text, seperated by a _
+            // sanity check this
+            String[] split = sane.split("_");
+            if (split.length >= 4){
+                if (split.length > 4) log.warn("Filename passes basic pixivmobile checks, but is still split into more then 4 portions; stuff may break");
+                return 4;
             }
         }
         // default case; no site was found
@@ -620,7 +630,13 @@ public class BulkImageImport {
             // construct url
             // return that
             return "https://www.pixiv.net/artworks/" + split[0];
-        } else {
+        } else if (sitesource == 4){
+            // pixiv mobile app downloaded images
+            // split by _
+            String[] split = filename.split("_");
+            // we want the second split section; the first is just "illust"
+            return "https://www.pixiv.net/artworks/" + split[1];
+        }else {
             return "No URL could be parsed";
         }
     }
