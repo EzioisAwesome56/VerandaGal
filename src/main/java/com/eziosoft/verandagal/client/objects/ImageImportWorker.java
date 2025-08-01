@@ -77,7 +77,13 @@ public class ImageImportWorker implements Runnable{
             try {
                 // webp previews may be disabled, dont waste diskspace if they are
                 if (!this.config.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(job.getFilename())){
-                    previewbytes = ImageUtils.generateImagePreview(temp);
+                    // HOTFIX: sometimes images just explode for unknown reasons. catch and handle them
+                    try {
+                        previewbytes = ImageUtils.generateImagePreview(temp);
+                    } catch (Exception e){
+                        log.error("First attempt to generate preview threw an IOError", e);
+                        previewbytes = null;
+                    }
                     // if its null, we can try again before permanetly giving up
                     // but first we normalize it
                     if (previewbytes == null){
@@ -85,7 +91,14 @@ public class ImageImportWorker implements Runnable{
                         previewbytes = ImageUtils.generateImagePreview(ImageUtils.normalizeImage(temp));
                     }
                 }
-                thumbnailbytes = ImageProcessor.generateThumbnail(temp);
+                try {
+                    thumbnailbytes = ImageProcessor.generateThumbnail(temp);
+                } catch (Exception e){
+                    // HOTFIX: in testing it doesnt always throw IOExceptions, but also we can try again with the new normalizer first
+                    log.warn("Thumbnail generation failed for reason: ", e);
+                    log.warn("Trying again with a normalized image");
+                    thumbnailbytes = ImageProcessor.generateThumbnail(ImageUtils.normalizeImage(temp));
+                }
             } catch (IOException e){
                 this.log.error("Something went wrong during thumbnail/preview gen, this may break things!");
                 this.log.error(e);
