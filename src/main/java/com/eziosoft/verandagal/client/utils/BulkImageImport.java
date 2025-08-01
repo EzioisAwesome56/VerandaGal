@@ -260,6 +260,9 @@ public class BulkImageImport {
         return 0;
     }
 
+    // TODO: maybe allow the user to change this in the config file?
+    private static final String bulkimportbotname = "bulkimporterbot9000";
+
     /**
      * before we can actually perform the bulk import, the files must have some very basic metadata applied to them
      * this method handles that
@@ -348,7 +351,7 @@ public class BulkImageImport {
         boolean hasbulk = false;
         long bulkid = -1;
         for (Map.Entry<Long, ArtistEntry> ent : artists.getArtists().entrySet()){
-            if (ent.getValue().getName().toLowerCase().equals("bulkimportbot")){
+            if (ent.getValue().getName().toLowerCase().equals(bulkimportbotname)){
                 hasbulk = true;
                 bulkid = ent.getKey();
             }
@@ -356,7 +359,7 @@ public class BulkImageImport {
         if (!hasbulk){
             log.info("No bulk artist exists, creating a new one");
             ArtistEntry bulkart = new ArtistEntry();
-            bulkart.setName("bulkimporterbot");
+            bulkart.setName(bulkimportbotname);
             bulkart.setNotes("uploaded using the bulk import feature");
             bulkart.setUrls(new String[]{"none"});
             // get our id for the new artist
