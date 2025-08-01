@@ -356,7 +356,7 @@ public class BulkImageImport {
         if (!hasbulk){
             log.info("No bulk artist exists, creating a new one");
             ArtistEntry bulkart = new ArtistEntry();
-            bulkart.setName("Bulk Importer Bot 9000");
+            bulkart.setName("bulkimporterbot");
             bulkart.setNotes("uploaded using the bulk import feature");
             bulkart.setUrls(new String[]{"none"});
             // get our id for the new artist
@@ -601,6 +601,8 @@ public class BulkImageImport {
         String dank = input;
         // remove -fullview for convience sake
         dank = dank.replace("-fullview", "");
+        // remove spaces
+        dank = dank.replace(" ", "");
         // do the first regex; this removes everything before the artist name
         Pattern before_art = Pattern.compile("^.*? *_by_", Pattern.CASE_INSENSITIVE);
         Matcher match = before_art.matcher(dank);
@@ -615,7 +617,7 @@ public class BulkImageImport {
         // HOTFIX: some files dont have the garbage at the end we need to filter, so we need to
         // account for this case
         // we can abuse more regex for this
-        Pattern count_underscores = Pattern.compile("[\\_]*\\_", Pattern.CASE_INSENSITIVE);
+        Pattern count_underscores = Pattern.compile("[-_]", Pattern.CASE_INSENSITIVE);
         match = count_underscores.matcher(dank);
         // then we count the matches
         int count = 0;
@@ -627,18 +629,28 @@ public class BulkImageImport {
             Pattern after_art;
             // check to see if it has a reuploader listed
             if (dank.contains("_by_")){
-                after_art = Pattern.compile("_by_[A-Za-z0-9]+_[A-Za-z0-9]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
+                after_art = Pattern.compile("_by_[A-Za-z0-9]+[-_][A-Za-z0-9]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
             } else {
-                after_art = Pattern.compile("_[A-Za-z0-9]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
+                //after_art = Pattern.compile("^(.*)_[\\w\\-()]*?\\.[a-zA-Z]+", Pattern.CASE_INSENSITIVE);
+                after_art = Pattern.compile("[_-][A-Za-z0-9\\(\\)]+\\.[A-Za-z]*", Pattern.CASE_INSENSITIVE);
             }
             match = after_art.matcher(dank);
             if (match.find()) {
                 // remove the match from the string
                 dank = dank.replace(match.group(0), "");
+                // check for -s
+                if (dank.contains("-")){
+                    // compile a new pattern
+                    Pattern extra_layer = Pattern.compile("([_-][\\w-]*?\\w*)");
+                    match = extra_layer.matcher(dank);
+                    if (match.find()){
+                        dank = dank.replace(match.group(0), "");
+                    }
+                }
                 // return the final result
                 return dank;
             } else {
-                log.warn("Failure to match, filename is invalid? Affected file: {} Phase: 2", input);
+                log.warn("Failure to match, filename is invalid? Affected file: {} Phase: 2, current: {}", input, dank);
                 return authorParseFallback(input);
             }
         } else {
