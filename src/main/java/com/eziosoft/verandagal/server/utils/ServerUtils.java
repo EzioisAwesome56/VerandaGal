@@ -139,7 +139,7 @@ public class ServerUtils {
         StringBuilder b = new StringBuilder();
         try {
             // get the header
-            b.append(VerandaServer.template.getTemplate("header"));
+            b.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Error"));
             // sidebar
             b.append(VerandaServer.sidebarBuilder.getSideBar());
             // load the invalid image text

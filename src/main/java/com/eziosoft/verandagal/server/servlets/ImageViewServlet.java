@@ -57,7 +57,7 @@ public class ImageViewServlet extends HttpServlet {
             if (override == 0) {
                 // we need to quickly build an error page for this
                 String page = "";
-                page += VerandaServer.template.getTemplate("header");
+                page += VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Image Filtered");
                 page += VerandaServer.sidebarBuilder.getSideBar();
                 // load the filtered template and then edit it
                 String filtered = VerandaServer.template.getTemplate("filtered");
@@ -96,7 +96,7 @@ public class ImageViewServlet extends HttpServlet {
                 addpath = pack.getFsdir() + "/";
             }
             // ok back to normal code now yay
-            b.append(VerandaServer.template.getTemplate("header"));
+            b.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Viewing image " + ourimage.getId()));
             b.append(VerandaServer.sidebarBuilder.getSideBar());
             // get the string of the image itself
             String imgview = VerandaServer.template.getTemplate("image");

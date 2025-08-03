@@ -53,7 +53,7 @@ public class GalleryBrowseServlet extends HttpServlet {
         }
         // start building the page
         StringBuilder b = new StringBuilder();
-        b.append(VerandaServer.template.getTemplate("header"));
+        b.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Viewing " + pack.getName()));
         b.append(VerandaServer.sidebarBuilder.getSideBar());
         // get the gallery template
         String gallery = VerandaServer.template.getTemplate("gallery");

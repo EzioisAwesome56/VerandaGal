@@ -42,7 +42,7 @@ public class PackInfoServlet extends HttpServlet {
         // then, do stuff
         StringBuilder page = new StringBuilder();
         // get the basics
-        page.append(VerandaServer.template.getTemplate("header"));
+        page.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Viewing information for pack " + pack.getName()));
         page.append(VerandaServer.sidebarBuilder.getSideBar());
         // load the template on its own
         String packtemp = VerandaServer.template.getTemplate("pack");

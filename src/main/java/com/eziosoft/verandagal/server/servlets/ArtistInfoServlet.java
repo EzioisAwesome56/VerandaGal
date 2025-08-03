@@ -49,7 +49,7 @@ public class ArtistInfoServlet extends HttpServlet {
         // then, do stuff
         StringBuilder page = new StringBuilder();
         // get the basics
-        page.append(VerandaServer.template.getTemplate("header"));
+        page.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Artist page for " + artist.getName()));
         page.append(VerandaServer.sidebarBuilder.getSideBar());
         // load the template on its own
         String arttemp = VerandaServer.template.getTemplate("artist");

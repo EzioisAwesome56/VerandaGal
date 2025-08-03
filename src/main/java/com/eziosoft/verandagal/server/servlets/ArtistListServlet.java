@@ -31,7 +31,7 @@ public class ArtistListServlet extends HttpServlet {
         }
         // otherwise, start building the page
         StringBuilder page = new StringBuilder();
-        page.append(VerandaServer.template.getTemplate("header"));
+        page.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Artist List"));
         page.append(VerandaServer.sidebarBuilder.getSideBar());
         // load the content now
         String content = VerandaServer.template.getTemplate("artistlist");

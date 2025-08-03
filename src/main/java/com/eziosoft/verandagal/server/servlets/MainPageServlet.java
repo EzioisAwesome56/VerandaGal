@@ -23,7 +23,7 @@ public class MainPageServlet extends HttpServlet {
         // pretty much just display the main page. its a simple process
         StringBuilder b = new StringBuilder();
         try {
-            b.append(VerandaServer.template.getTemplate("header"));
+            b.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Home Page"));
             b.append(VerandaServer.sidebarBuilder.getSideBar());
             String what = VerandaServer.template.getTemplate("stockmain");
             String main = VerandaServer.template.getTemplate("mainpage");

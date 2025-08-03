@@ -120,7 +120,7 @@ public class SettingsPageServlet  extends HttpServlet {
      */
     private static String build_page(SessionObject seshobj) throws IOException{
         StringBuilder b = new StringBuilder();
-        b.append(VerandaServer.template.getTemplate("header"));
+        b.append(VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "Settings"));
         b.append(VerandaServer.sidebarBuilder.getSideBar());
         String settings_page = VerandaServer.template.getTemplate("settings");
         // set the checkboxes to the values currently stored in the user session

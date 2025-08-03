@@ -4,6 +4,7 @@
 <head>
     <link rel="stylesheet" href="/res/main.css">
     <script type="text/javascript" src="/res/main.js"></script>
+    <title>${SERVNAME} - ${PAGENAME}</title>
 </head>
 
 <body>

@@ -100,7 +100,7 @@ public class APIHandlerServlet extends HttpServlet {
         resp.setContentType("text/html");
         // build the page
         String page = "";
-        page += VerandaServer.template.getTemplate("header");
+        page += VerandaServer.template.getTemplate("header").replace("${PAGENAME}", "API Documentation");
         page += VerandaServer.sidebarBuilder.getSideBar();
         // the actual docs page
         page += VerandaServer.template.getTemplate("api");
