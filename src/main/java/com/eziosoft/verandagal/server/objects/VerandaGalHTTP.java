@@ -22,6 +22,10 @@ public class VerandaGalHTTP {
 
     public VerandaGalHTTP(int port, int max_threads) throws Exception {
         // run thru the process of creating a server
+        if (max_threads == -1){
+            // set to cpus - 1
+            max_threads = Runtime.getRuntime().availableProcessors() - 1;
+        }
         this.pool = new QueuedThreadPool(max_threads);
         this.server = new Server(this.pool);
         this.connector = new ServerConnector(this.server);
