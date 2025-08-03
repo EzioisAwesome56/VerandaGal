@@ -58,6 +58,7 @@ public class MainDatabase {
         // we apparently don't need this but im gonna put it back for no good reason
         configuration.setProperty(AvailableSettings.DIALECT, "org.hibernate.dialect.H2Dialect");
     }
+    @SuppressWarnings("deprecation") // we dont need multiple configuration files
     private void initMariaDB(Configuration configuration){
         configuration.setProperty(AvailableSettings.JAKARTA_JDBC_DRIVER, "org.mariadb.jdbc.Driver");
         // set the path for where the database file will be stored
