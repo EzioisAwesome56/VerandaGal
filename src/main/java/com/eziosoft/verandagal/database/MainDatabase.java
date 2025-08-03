@@ -196,6 +196,44 @@ public class MainDatabase {
 
     }
 
+    public Long[] getSubsetOfAllImages(long start, long amount){
+        // get a connection to the database
+        Session sesh = this.factory.openSession();
+        Transaction act = sesh.beginTransaction();
+        // write the query to get all images
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName());
+        // setup bounds information
+        // TODO: why is this argument just an int? shouldnt it be a long?
+        q.setFirstResult(Math.toIntExact(start));
+        q.setMaxResults(Math.toIntExact(amount));
+        // get the images
+        List<Long> images = q.getResultList();
+        // commit and close
+        act.commit();
+        sesh.close();
+        // return our list
+        return images.toArray(new Long[0]);
+    }
+
+    /**
+     * gets all image ids in the database
+     * @return all image ids as longs
+     */
+    public Long[] getAllImages(){
+        // setup a database connection
+        Session sesh = this.factory.openSession();
+        Transaction act = sesh.beginTransaction();
+        // make the query
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName());
+        // get our stuff
+        List<Long> images = q.getResultList();
+        // commit and close
+        act.commit();
+        sesh.close();
+        // return what we just got
+        return images.toArray(new Long[0]);
+    }
+
     /**
      * returns a list of longs with every image id by artist
      * returns null if the list has less then 1 entry

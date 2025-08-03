@@ -1,6 +1,7 @@
 package com.eziosoft.verandagal.server.objects;
 
 
+import com.eziosoft.verandagal.database.MainDatabase;
 import com.eziosoft.verandagal.server.utils.SessionUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -14,21 +15,49 @@ public class ItemPage {
     private int current_page;
     private int total_pages;
     // not returnable by this object, but will be used later
-    private final Long[] source;
+    private Long[] source;
     private final HttpServletRequest req;
     private boolean generated = false;
+    // new stuff
+    private final boolean force_override;
+    private long total_items;
 
+    @Deprecated
     public ItemPage(Long[] source, HttpServletRequest req){
         // store the variables we absolutely need
         this.source = source;
         this.req = req;
         this.current_page = 0;
+        this.force_override = false;
+    }
+
+    public ItemPage(MainDatabase db, HttpServletRequest req, boolean forcepage, int page, long total){
+        this.req = req;
+        this.force_override = forcepage;
+        this.current_page = page;
+        this.total_items = total;
+        // get our item ids
+        SessionObject sesh = SessionUtils.getSessionDetails(req.getSession());
+        if (sesh.isUse_pagination() || this.force_override){
+            // calculate the starting index
+            long skip_index = (this.current_page * sesh.getItems_per_page());
+            // also get total pages
+            this.total_pages = Math.ceilDiv(Math.toIntExact(this.total_items), sesh.getItems_per_page());
+            // get our list of items
+            this.item_ids = db.getSubsetOfAllImages(skip_index, sesh.getItems_per_page());
+            this.generated = true;
+        } else {
+            this.item_ids = db.getAllImages();
+            this.total_pages = 1;
+            this.generated = true;
+        }
     }
 
     /**
      * call this to set the current page the user is viewing
      * @param page page number that the user is currently on
      */
+    @Deprecated
     public void setCurrentPage(int page){
         this.current_page = page;
     }
@@ -36,6 +65,7 @@ public class ItemPage {
     /**
      * you are REQUIRED to use this before you get the page content or you will explode
      */
+    @Deprecated
     public void generatePage(){
         // get the current user's session
         HttpSession httpsession = this.req.getSession();
@@ -76,6 +106,7 @@ public class ItemPage {
      * internal routine called to generate the actual page. mostly here for completeness
      * @param itemsperpage how many items to show per page
      */
+    @Deprecated
     private void PageGeneration(int itemsperpage){
         // also calculate how many pages we have
         this.total_pages = Math.ceilDiv(this.source.length, itemsperpage);

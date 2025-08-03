@@ -92,6 +92,7 @@ public class VerandaServer {
         server.addAsyncServlet(PackListServlet.class, "/packlist/*");
         server.addAsyncServlet(PackInfoServlet.class, "/packinfo/*");
         server.addAsyncServlet(PreviewBackendServlet.class, "/preview/*");
+        server.addAsyncServlet(ViewAllBrowseServlet.class, "/all/*");
         // start it
         server.start();
         /*
