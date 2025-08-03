@@ -10,6 +10,8 @@ import com.eziosoft.verandagal.client.VerandaClient;
 import com.eziosoft.verandagal.server.VerandaServer;
 
 import javax.imageio.ImageIO;
+import java.nio.charset.Charset;
+import java.util.Locale;
 
 public class Main {
     public static Gson gson_pretty = new GsonBuilder().setPrettyPrinting().create();
@@ -19,6 +21,16 @@ public class Main {
 
     public static void main(String[] args) throws ParseException {
         LOGGER.info("VerandaGal v1.0");
+        // check the system locale
+        String locale = Locale.getDefault().toString() + Charset.defaultCharset().displayName().toLowerCase();
+        LOGGER.info("Current System Locale: {}", locale);
+        if (!locale.contains("utf-8")){
+            LOGGER.warn("WARNING: your system file encoding, {}, does not appear to be utf-8", locale);
+            LOGGER.warn("while this software will function fine without it, anything with weird filenames in it,");
+            LOGGER.warn("i.e. containing japanese characters, will cause strange behaviors! Consider switching to a utf-8 locale");
+            LOGGER.warn("Debian, for example, is just C by default. Changing it to C.UTF-8 will fix this issue");
+            LOGGER.warn("You have been warned!");
+        }
         // setup extra runtime options
         setBootProperties();
         // setup options for stuff
