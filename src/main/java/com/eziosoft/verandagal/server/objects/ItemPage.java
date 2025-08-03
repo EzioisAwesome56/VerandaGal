@@ -2,6 +2,8 @@ package com.eziosoft.verandagal.server.objects;
 
 
 import com.eziosoft.verandagal.database.MainDatabase;
+import com.eziosoft.verandagal.database.objects.Artist;
+import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.utils.SessionUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -31,6 +33,14 @@ public class ItemPage {
         this.force_override = false;
     }
 
+    /**
+     * handle pagination for all images endpoint
+     * @param db database connection
+     * @param req http request
+     * @param forcepage if pagination is force enabled
+     * @param page current page
+     * @param total total number of items
+     */
     public ItemPage(MainDatabase db, HttpServletRequest req, boolean forcepage, int page, long total){
         this.req = req;
         this.force_override = forcepage;
@@ -48,6 +58,68 @@ public class ItemPage {
             this.generated = true;
         } else {
             this.item_ids = db.getAllImages();
+            this.total_pages = 1;
+            this.generated = true;
+        }
+    }
+
+    /**
+     * used to handle pagination of the content of an image pack
+     * @param db maindb connection
+     * @param req http request we are serving
+     * @param forcepage if pageination is forced on or not
+     * @param page current page
+     * @param total how many items we have
+     * @param pack the imagepack we are working on
+     */
+    public ItemPage(MainDatabase db, HttpServletRequest req, boolean forcepage, int page, long total, ImagePack pack){
+        this.req = req;
+        this.force_override = forcepage;
+        this.current_page = page;
+        this.total_items = total;
+        // get our item ids
+        SessionObject sesh = SessionUtils.getSessionDetails(req.getSession());
+        if (sesh.isUse_pagination() || this.force_override){
+            // calculate the starting index
+            int skip_index = (this.current_page * sesh.getItems_per_page());
+            // also get total pages
+            this.total_pages = Math.ceilDiv(Math.toIntExact(this.total_items), sesh.getItems_per_page());
+            // get our list of items
+            this.item_ids = db.getSubsetOfImagesInPack(pack.getId(), skip_index, sesh.getItems_per_page());
+            this.generated = true;
+        } else {
+            this.item_ids = db.getAllImagesInPack(pack.getId());
+            this.total_pages = 1;
+            this.generated = true;
+        }
+    }
+
+    /**
+     * used to pageinate the artist gallery page
+     * @param db database connection
+     * @param req http request
+     * @param forcepage is pagination force enabled
+     * @param page current page number
+     * @param total how many items we have
+     * @param art the artist we want to get images for
+     */
+    public ItemPage(MainDatabase db, HttpServletRequest req, boolean forcepage, int page, long total, Artist art){
+        this.req = req;
+        this.force_override = forcepage;
+        this.current_page = page;
+        this.total_items = total;
+        // get our item ids
+        SessionObject sesh = SessionUtils.getSessionDetails(req.getSession());
+        if (sesh.isUse_pagination() || this.force_override){
+            // calculate the starting index
+            int skip_index = (this.current_page * sesh.getItems_per_page());
+            // also get total pages
+            this.total_pages = Math.ceilDiv(Math.toIntExact(this.total_items), sesh.getItems_per_page());
+            // get our list of items
+            this.item_ids = db.getSubsetOfImagesByArtist(art.getId(), skip_index, sesh.getItems_per_page());
+            this.generated = true;
+        } else {
+            this.item_ids = db.getAllImagesByArtist(art.getId());
             this.total_pages = 1;
             this.generated = true;
         }

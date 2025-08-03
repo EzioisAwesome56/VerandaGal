@@ -43,8 +43,8 @@ public class ArtistInfoServlet extends HttpServlet {
         try {
             pageno = Integer.parseInt(req.getParameter("p"));
         } catch (Exception e){
-            // set to -1, it either doesnt exist or we are being scammed
-            pageno = -1;
+            // set to 0; good fallback and we wouldve set it to this anyway
+            pageno = 0;
         }
         // then, do stuff
         StringBuilder page = new StringBuilder();
@@ -70,12 +70,17 @@ public class ArtistInfoServlet extends HttpServlet {
         arttemp = arttemp.replace("${ARTURLS}", urls.toString());
         arttemp = arttemp.replace("${ARTNOTES}", artist.getNotes());
         // pain in the ass time: display all images owned by the artist in a gallery on their page
-        // get all the ids owned by them
-        Long[] imgids_raw = VerandaServer.maindb.getAllImagesByArtist(artist.getId());
-        // next, we have to do pagination shit
-        ItemPage pageitem = new ItemPage(imgids_raw, req);
-        if (pageno != -1) pageitem.setCurrentPage(pageno);
-        pageitem.generatePage();
+        // get the information we need
+        long total_images = VerandaServer.maindb.getImageCountByArtist(artist.getId());
+        if (total_images <= 0){
+            VerandaServer.LOGGER.error("Image Pack {} doesnt have any images?");
+            ServerUtils.handleInvalidRequest(req, resp, "invalidpack");
+            return;
+        }
+        // TODO: set this as an option in the config file
+        boolean force_pagination = total_images > 4000;
+        // PAGINATION SUPPORT: run the entire thing thru the imagepage function to do the hard work for us
+        ItemPage pageitem = new ItemPage(VerandaServer.maindb, req, force_pagination, pageno, total_images, artist);
         // get the built table
         HashMap<Integer, Object> output = ServerUtils.buildThumbnailGallery(req, pageitem.getPageContents(), VerandaServer.configFile.getItemsPerRow());
         // then, put the built mini-gallery into the page
@@ -98,12 +103,12 @@ public class ArtistInfoServlet extends HttpServlet {
             oof = oof.replace("${PAGES}", ServerUtils.buildPageCount(pageitem, pageno));
             arttemp = arttemp.replace("${NAV}", oof);
             // also show total number of items
-            arttemp = arttemp.replace("${IMGCOUNT}", "Showing " + pageitem.getPageContents().length + " of " + imgids_raw.length + " items");
+            arttemp = arttemp.replace("${IMGCOUNT}", "Showing " + pageitem.getPageContents().length + " of " + total_images + " items");
         } else {
             // get rid of the navigation at the bottom
             arttemp = arttemp.replace("${NAV}", "");
             // also show total number of items
-            arttemp = arttemp.replace("${IMGCOUNT}", "Showing " + imgids_raw.length + " items");
+            arttemp = arttemp.replace("${IMGCOUNT}", "Showing " + total_images + " items");
         }
         // once done, add it to the string builder
         page.append(arttemp);

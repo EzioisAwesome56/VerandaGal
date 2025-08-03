@@ -40,8 +40,8 @@ public class GalleryBrowseServlet extends HttpServlet {
         try {
             pageno = Integer.parseInt(req.getParameter("p"));
         } catch (Exception e){
-            // set to -1 for non-existent page number
-            pageno = -1;
+            // just set it to 0; it gets set to this anyway later
+            pageno = 0;
         }
         // then, attempt to load the pack and see if it exists
         ImagePack pack = VerandaServer.maindb.LoadObject(ImagePack.class, id);
@@ -60,11 +60,16 @@ public class GalleryBrowseServlet extends HttpServlet {
         // replace the strings
         gallery = gallery.replace("${PACKNAME}", pack.getName());
         // find out how many images we have in the DB
-        Long[] imgids_raw = VerandaServer.maindb.getAllImagesInPack(pack.getId());
-        // PAGINATION SUPPORT: we need to create a new array of ids to then split into arrays
-        ItemPage page = new ItemPage(imgids_raw, req);
-        if (pageno != -1) page.setCurrentPage(pageno);
-        page.generatePage();
+        long total_images = VerandaServer.maindb.getImageCountInPack(pack.getId());
+        if (total_images <= 0){
+            VerandaServer.LOGGER.error("Image Pack {} doesnt have any images?");
+            ServerUtils.handleInvalidRequest(req, resp, "invalidpack");
+            return;
+        }
+        // TODO: set this as an option in the config file
+        boolean force_pagination = total_images > 4000;
+        // PAGINATION SUPPORT: run the entire thing thru the imagepage function to do the hard work for us
+        ItemPage page = new ItemPage(VerandaServer.maindb, req, force_pagination, pageno, total_images, pack);
         // NEW FEATURE: we need to filter the gallery view too
         HashMap<Integer, Object> output = ServerUtils.buildThumbnailGallery(req, page.getPageContents(), VerandaServer.configFile.getItemsPerRow());
         // update the gallery string with our content
@@ -78,7 +83,7 @@ public class GalleryBrowseServlet extends HttpServlet {
         }
         // update the count information with page information
         if (page.getTotal_pages() > 1){
-            gallery = gallery.replace("${ITEMCOUNT}", "Showing " + Integer.toString(page.getPageContents().length) + " of " + Integer.toString(imgids_raw.length) + " items");
+            gallery = gallery.replace("${ITEMCOUNT}", "Showing " + Integer.toString(page.getPageContents().length) + " of " + Long.toString(total_images) + " items");
         } else {
             gallery = gallery.replace("${ITEMCOUNT}", "Showing " + Integer.toString(page.getPageContents().length) + " items");
         }

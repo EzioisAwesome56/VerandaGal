@@ -30,8 +30,9 @@ public class ViewAllBrowseServlet extends HttpServlet {
         try {
             pageno = Integer.parseInt(req.getParameter("p"));
         } catch (Exception e){
-            // set to -1 for non-existent page number
-            pageno = -1;
+            // set to 0 for weird page numbers or just stuff that failed to parse
+            // used to be 0 but we set it to 0 later so what is the point
+            pageno = 0;
         }
         // start building the page
         StringBuilder b = new StringBuilder();
@@ -50,15 +51,9 @@ public class ViewAllBrowseServlet extends HttpServlet {
             ServerUtils.handleInvalidRequest(req, resp, "noimages");
             return;
         }
-        boolean force_pagination;
-        if (total_images > 4000){
-            force_pagination = true;
-        } else {
-            force_pagination = false;
-        }
+        // TODO: set as option in config file
+        boolean force_pagination = total_images > 4000;
         // do new pagination, get the image ids from inside this class
-        // but also bounds check the page number
-        if (pageno < 0) pageno = 0;
         ItemPage page = new ItemPage(VerandaServer.maindb, req, force_pagination, pageno, total_images);
         // NEW FEATURE: we need to filter the gallery view too
         HashMap<Integer, Object> output = ServerUtils.buildThumbnailGallery(req, page.getPageContents(), VerandaServer.configFile.getItemsPerRow());

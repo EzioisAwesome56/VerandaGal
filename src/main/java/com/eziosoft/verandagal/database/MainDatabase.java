@@ -171,6 +171,31 @@ public class MainDatabase {
         }
     }
 
+    /**
+     * get how many images exist in a pack
+     * @param packid packid to check
+     * @return number of images, -1 if none
+     */
+    public long getImageCountInPack(long packid){
+        // get a session
+        Session sesh = this.factory.openSession();
+        // open a transaction
+        Transaction act = sesh.beginTransaction();
+        Query<Long> q = sesh.createQuery("select count(*) from " + Image.class.getName() + " where packid=:pid");
+        q.setParameter("pid", packid);
+        // clean up a little
+        act.commit();
+        // get our result
+        long result = (Long) q.uniqueResult();
+        // clean up
+        sesh.close();
+        if (result <= 0){
+            return -1;
+        } else {
+            return result;
+        }
+    }
+
     public Long[] getAllImagesInPack(long packid){
         // get a session
         Session sesh = this.factory.openSession();
@@ -194,6 +219,38 @@ public class MainDatabase {
             return images.toArray(new Long[0]);
         }
 
+    }
+
+    /**
+     * gets a subset of imageids from a pack from the database
+     * @param packid packid to get images from
+     * @param start starting index for what to return
+     * @param amount how many items to return
+     * @return list of ids, or null if there wherent any
+     */
+    public Long[] getSubsetOfImagesInPack(long packid, int start, int amount){
+        // init a database connection
+        Session sesh = this.factory.openSession();
+        Transaction act = sesh.beginTransaction();
+        // write a query for what we want
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName() + " where packid=:pid");
+        q.setParameter("pid", packid);
+        // append bounds information
+        q.setFirstResult(start);
+        q.setMaxResults(amount);
+        List<Long> images = q.getResultList();
+        int size = images.size();
+        // commit
+        act.commit();
+        // close the session
+        sesh.close();
+        // check to make sure we got anything
+        if (size < 1){
+            return null;
+        } else {
+            // we have a list of things
+            return images.toArray(new Long[0]);
+        }
     }
 
     public Long[] getSubsetOfAllImages(long start, long amount){
@@ -263,6 +320,63 @@ public class MainDatabase {
             return images.toArray(new Long[0]);
         }
 
+    }
+
+    /**
+     * used for artist pagination. gets a subset of all images by the,
+     * @param artistid the artist id of who drew the art
+     * @param start start index
+     * @param amount how many we want
+     * @return list of ids, or null
+     */
+    public Long[] getSubsetOfImagesByArtist(long artistid, int start, int amount){
+        // init a database connection
+        Session sesh = this.factory.openSession();
+        Transaction act = sesh.beginTransaction();
+        // write a query for what we want
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName() + " where artistid=:aid");
+        q.setParameter("aid", artistid);
+        // append bounds information
+        q.setFirstResult(start);
+        q.setMaxResults(amount);
+        List<Long> images = q.getResultList();
+        int size = images.size();
+        // commit
+        act.commit();
+        // close the session
+        sesh.close();
+        // check to make sure we got anything
+        if (size < 1){
+            return null;
+        } else {
+            // we have a list of things
+            return images.toArray(new Long[0]);
+        }
+    }
+
+    /**
+     * gets the total number of images attributed to an artist
+     * @param artid the artist id we are working with
+     * @return total number of items, or -1 if there are none
+     */
+    public long getImageCountByArtist(long artid){
+        // get a session
+        Session sesh = this.factory.openSession();
+        // open a transaction
+        Transaction act = sesh.beginTransaction();
+        Query<Long> q = sesh.createQuery("select count(*) from " + Image.class.getName() + " where artistid=:aid");
+        q.setParameter("aid", artid);
+        // clean up a little
+        act.commit();
+        // get our result
+        long result = (Long) q.uniqueResult();
+        // clean up
+        sesh.close();
+        if (result <= 0){
+            return -1;
+        } else {
+            return result;
+        }
     }
 
 
