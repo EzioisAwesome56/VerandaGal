@@ -1,5 +1,5 @@
 <td class="item">
 <a href="/image/?id=${IMGID}">
-<img src="${THUMBURL}" alt="words">
+<img src="${THUMBURL}" alt="${THUMBALT}">
 </a>
 </td>

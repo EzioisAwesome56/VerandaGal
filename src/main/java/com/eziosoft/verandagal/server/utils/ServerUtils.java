@@ -229,6 +229,8 @@ public class ServerUtils {
                 // replace the content with what we need
                 base = base.replace("${THUMBURL}", "/thumb/?id=" + imgid);
                 base = base.replace("${IMGID}", Long.toString(imgid));
+                // NEW: change the alt text to be something more meaningful
+                base = base.replace("${THUMBALT}", "Image ID: " + Long.toString(imgid));
                 // append to string builder
                 tablebuilder.append(base);
             }
