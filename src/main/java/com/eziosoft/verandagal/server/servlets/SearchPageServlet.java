@@ -52,7 +52,6 @@ public class SearchPageServlet extends HttpServlet {
         // do some string replacing
         page = page.replace("${PACKNAME}", "Search Results");
         // next, run a search
-        VerandaServer.LOGGER.info("Searching for {}", searchterms);
         List<Image> found_images = VerandaServer.maindb.searchImages(searchterms);
         // list how many items where found
         page = page.replace("${ITEMCOUNT}", "Found " + found_images.size() + " images from your search");
