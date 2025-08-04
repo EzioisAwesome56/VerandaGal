@@ -139,9 +139,10 @@ public class DatabaseMigrations {
         act.commit();
         if (size < 1){
             LOGGER.error("Something has gone horribly wrong trying to perform a migration of artists!");
-            LOGGER.error("there are no artists in the table, bailing out!");
+            LOGGER.error("there are no artists in the table, halting migration and reconnecting to maindb");
+            sesh.close();
             factory.close();
-            System.exit(-1);
+            VerandaServer.maindb = new MainDatabase(cfile);
             return;
         }
         long num_arts = q.uniqueResult();
