@@ -26,6 +26,14 @@ public class APIHandlerServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!VerandaServer.configFile.isEnableAPI()){
+            VerandaServer.LOGGER.warn("Something tried to access the search API endpoint even tho its disabled");
+            // exit this call
+            AsyncContext cxt = req.startAsync();
+            ServletOutputStream out = resp.getOutputStream();
+            out.setWriteListener(new BasicTextWriter("API is disabled and cannot be used", cxt, out));
+            return;
+        }
         resp.setContentType("application/json; charset=UTF-8");
         // parse the path
         String[] raw;
