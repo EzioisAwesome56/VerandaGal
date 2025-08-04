@@ -7,6 +7,7 @@ import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.VerandaServer;
 import com.eziosoft.verandagal.server.objects.ArtistAPIResponse;
 import com.eziosoft.verandagal.server.objects.ImageAPIResponse;
+import com.eziosoft.verandagal.server.objects.ImageSearchAPIResponse;
 import com.eziosoft.verandagal.server.objects.PackAPIResponse;
 import com.eziosoft.verandagal.server.utils.BasicTextWriter;
 import jakarta.servlet.AsyncContext;
@@ -18,9 +19,49 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class APIHandlerServlet extends HttpServlet {
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json; charset=UTF-8");
+        // parse the path
+        String[] raw;
+        try {
+            raw = req.getPathInfo().split("/");
+        } catch (Exception e){
+            raw = new String[]{"error", "error"};
+        }
+        // for some reason, 0 is blank. sick
+        String path = raw[1];
+        if (!path.equals("search")){
+            doError(req, resp, "This endpoint does not accept POST requests");
+            return;
+        }
+        // get the terms sent to the endpoint
+        String searchterms = null;
+        for (Map.Entry<String, String[]> thing : req.getParameterMap().entrySet()){
+            if (thing.getKey().equals("term")) {
+                searchterms = thing.getValue()[0];
+                continue;
+            }
+        }
+        if (searchterms == null){
+            doError(req, resp, "You did not provide any search terms! send them in the \"term\" variable!");
+            return;
+        }
+        // perform the search
+        ImageSearchAPIResponse apiresponse = new ImageSearchAPIResponse(searchterms, VerandaServer.maindb);
+        // convert to json
+        String json = Main.gson_pretty.toJson(apiresponse);
+        // send it to the client
+        AsyncContext cxt = req.startAsync();
+        ServletOutputStream out = resp.getOutputStream();
+        out.setWriteListener(new BasicTextWriter(json, cxt, out));
+        return;
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -159,12 +200,25 @@ public class APIHandlerServlet extends HttpServlet {
      * @param req http request
      * @param resp http response
      */
+    @Deprecated
     private static void doError(HttpServletRequest req, HttpServletResponse resp) throws IOException{
+        // because this function gets used a lot, this will be a shim to the new version
+        doError(req, resp, "valid request, invalid object requested");
+    }
+
+    /**
+     * does an error with custom message if you fucked up your API request
+     * @param req http request
+     * @param resp http response
+     * @param errormsg text you wish to show in an json error block
+     * @throws IOException if something breaks somehow
+     */
+    private static void doError(HttpServletRequest req, HttpServletResponse resp, String errormsg) throws IOException{
         // very simple function
         // i just didnt want to copy paste the same code like 4 times
         AsyncContext cxt = req.startAsync();
         ServletOutputStream out = resp.getOutputStream();
-        out.setWriteListener(new BasicTextWriter("{\"error\": \"valid request, invalid object requested\"}", cxt, out));
+        out.setWriteListener(new BasicTextWriter("{\"error\": \"" + errormsg + "\"}", cxt, out));
         return;
     }
 

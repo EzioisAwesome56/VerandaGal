@@ -85,4 +85,15 @@
     		<b>Required aid value:</b> 5<br>
     		<b>Requires oid:</b> no<br>
     		<b>Response format:</b> see format for Image Information Endpoint
+    <hr>
+        <h2>Search Endpoint</h2>
+        <b>Required url:</b> /search<br>
+        <b>Method:</b> POST<br>
+        Place your search term into the "term" post variable and post it to this endpoint<br>
+        <b>Response format:</b><br>
+        <ul>
+            <li><b>search_terms</b> the terms of which you searched for</li>
+            <li><b>image_list</b> array of image ids that your search found</li>
+            <li><b>found_items</b> number of how many items your search found</li>
+        </ul>
 </div>
