@@ -1,5 +1,6 @@
 package com.eziosoft.verandagal.database;
 
+import com.eziosoft.verandagal.Main;
 import com.eziosoft.verandagal.utils.ConfigFile;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -8,6 +9,11 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
+import org.hibernate.search.engine.search.common.ValueModel;
+import org.hibernate.search.engine.search.query.SearchResult;
+import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
+import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tool.schema.Action;
 import com.eziosoft.verandagal.database.objects.Artist;
@@ -15,6 +21,7 @@ import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.VerandaServer;
 
+import java.io.File;
 import java.util.List;
 
 public class MainDatabase {
@@ -41,6 +48,7 @@ public class MainDatabase {
         this.database = config.getMaria_dbname();
         // DONT FORGET TO INIT THE FACTORY DUMBASS
         this.initSessionFactory();
+        this.doInitialIndex(config);
     }
 
     public void close(){
@@ -93,6 +101,9 @@ public class MainDatabase {
         // set the auto mode
         configuration.setProperty(AvailableSettings.HBM2DDL_AUTO, Action.ACTION_UPDATE);
 
+        // TODO: add config file option for full text search
+        configuration.setProperty("hibernate.search.backend.directory.root", new File(this.dbdir, "search").getAbsolutePath());
+
         // we need to register all of our tables/objects here or else
         // we won't be able to store anything in the DB
         configuration.addAnnotatedClass(Image.class);
@@ -105,6 +116,45 @@ public class MainDatabase {
         this.factory = configuration.buildSessionFactory(serviceRegistry);
     }
 
+    private void doInitialIndex(ConfigFile conf){
+        // TODO: check if search is enabled at all
+        if (1 == 1){
+            // get a session
+            Session sesh = this.factory.openSession();
+            // make it into a search session
+            SearchSession searchsesh = Search.session(sesh);
+            // then, setup the indexer
+            MassIndexer indexer = searchsesh.massIndexer(Image.class).threadsToLoadObjects(7);
+            try {
+                indexer.startAndWait();
+            } catch (Exception e){
+                Main.LOGGER.error("Something broke while trying to index", e);
+            }
+            // once we're done, close everything
+            sesh.close();
+        }
+    }
+
+    public List<Image> searchImages(String terms){
+        // TODO: hibernate has wildcard things, escape them?
+        // open a new session
+        Session sesh = this.factory.openSession();
+        SearchSession search = Search.session(sesh);
+        // run the search
+        SearchResult<Image> result = search.search(Image.class)
+                .where(f -> f.wildcard().fields("filename", "uploaderComments").matching("*" + terms + "*"))
+                .fetchAll();
+        // convert to list
+        List<Image> hits = result.hits();
+        // cleanup
+        sesh.close();
+        return hits;
+    }
+
+    /**
+     * takes an object and saves it to the database
+     * @param obj the object to save
+     */
     public void SaveObject(Object obj){
         // get a session
         Session sesh = this.factory.openSession();

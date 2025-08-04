@@ -19,6 +19,7 @@
                     <td class="toplink"><a href="/packlist">Image Packs</a></td>
                     <td class="toplink"><a href="/random">Random Image</a></td>
                     <td class="toplink"><a href="/all">All Images</a></td>
+                    <td class="toplink"><a href="/search">Search Images</a></td>
                     <td class="toplink"><a href="/setting">Settings</a></td>
                 </tr>
             </tbody>

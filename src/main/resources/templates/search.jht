@@ -1,0 +1,8 @@
+<div class="imgview-content">
+<h2>Search for Images</h2>
+<form action="/search" method="post" id="theform">
+Please enter search terms<br>
+<textarea name="searchterms" form="theform"></textarea>
+<input type="submit" value="Search">
+</form>
+</div>

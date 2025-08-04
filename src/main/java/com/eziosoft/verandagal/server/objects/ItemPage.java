@@ -3,10 +3,13 @@ package com.eziosoft.verandagal.server.objects;
 
 import com.eziosoft.verandagal.database.MainDatabase;
 import com.eziosoft.verandagal.database.objects.Artist;
+import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.utils.SessionUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+
+import java.util.List;
 
 public class ItemPage {
     /**
@@ -123,6 +126,27 @@ public class ItemPage {
             this.total_pages = 1;
             this.generated = true;
         }
+    }
+
+    /**
+     * takes in a list of images and then creates an item page for it.
+     * @param items list of images to process
+     */
+    public ItemPage(List<Image> items){
+        // need to make compiler mcgee happy
+        this.force_override = false;
+        this.req = null;
+        // now we can run our actual logic
+        this.total_items = items.size();
+        // convert our shit to a new array
+        this.item_ids = new Long[Math.toIntExact(this.total_items)];
+        for (int i = 0; i < this.total_items; i++){
+            this.item_ids[i] = items.get(i).getId();
+        }
+        // set the generated flag
+        this.generated = true;
+        // pretty much done now
+        this.total_pages = 1;
     }
 
     /**
