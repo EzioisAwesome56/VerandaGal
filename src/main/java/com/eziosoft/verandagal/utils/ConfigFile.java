@@ -25,6 +25,7 @@ public class ConfigFile {
     private final String maria_pass;
     private final String maria_dbname;
     private final String maria_host;
+    private final boolean enable_search;
 
     public boolean isShowStockFAQ() {
         return this.showStockFAQ;
@@ -104,6 +105,8 @@ public class ConfigFile {
         return this.maria_host;
     }
 
+    public boolean isEnable_search() { return this.enable_search; }
+
     public ConfigFile(){
         // make a blank config file with default values
         this.serviceName = "VerandaGal";
@@ -122,6 +125,7 @@ public class ConfigFile {
         this.ShowDebugLog = false;
         this.DontUsePreviews = false;
         this.pageinationdefault = false;
+        this.enable_search = true;
         this.itemsperpage = 40;
         this.useH2 = true;
         this.maria_dbname = "verandagal";

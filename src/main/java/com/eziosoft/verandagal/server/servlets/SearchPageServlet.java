@@ -24,6 +24,12 @@ public class SearchPageServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // check to make sure search is even enabled
+        if (!VerandaServer.configFile.isEnable_search()){
+            ServerUtils.handleInvalidRequest(req, resp, "nosearch");
+            return;
+        }
+        resp.setContentType("text/html");
         // get session
         HttpSession session = req.getSession();
         SessionObject obj = SessionUtils.getSessionDetails(session);
@@ -78,6 +84,12 @@ public class SearchPageServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // check to make sure search is even enabled
+        if (!VerandaServer.configFile.isEnable_search()){
+            ServerUtils.handleInvalidRequest(req, resp, "nosearch");
+            return;
+        }
+        resp.setContentType("text/html");
         // quickly slap together the actual page
         // send false because this is the search input page
         String page = build_page(false);

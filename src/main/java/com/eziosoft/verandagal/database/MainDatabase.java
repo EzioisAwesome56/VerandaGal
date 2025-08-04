@@ -36,6 +36,7 @@ public class MainDatabase {
     private final String password;
     private final String host;
     private final String database;
+    private final boolean useSearch;
 
     public MainDatabase(ConfigFile config){
         // set the db dir
@@ -46,6 +47,7 @@ public class MainDatabase {
         this.password = config.getMaria_pass();
         this.host = config.getMaria_host();
         this.database = config.getMaria_dbname();
+        this.useSearch = config.isEnable_search();
         // DONT FORGET TO INIT THE FACTORY DUMBASS
         this.initSessionFactory();
         this.doInitialIndex(config);
@@ -101,8 +103,10 @@ public class MainDatabase {
         // set the auto mode
         configuration.setProperty(AvailableSettings.HBM2DDL_AUTO, Action.ACTION_UPDATE);
 
-        // TODO: add config file option for full text search
-        configuration.setProperty("hibernate.search.backend.directory.root", new File(this.dbdir, "search").getAbsolutePath());
+        // see if we should be using search
+        if (this.useSearch){
+            configuration.setProperty("hibernate.search.backend.directory.root", new File(this.dbdir, "search").getAbsolutePath());
+        }
 
         // we need to register all of our tables/objects here or else
         // we won't be able to store anything in the DB
@@ -117,8 +121,7 @@ public class MainDatabase {
     }
 
     private void doInitialIndex(ConfigFile conf){
-        // TODO: check if search is enabled at all
-        if (1 == 1){
+        if (this.useSearch){
             // get a session
             Session sesh = this.factory.openSession();
             // make it into a search session
@@ -132,9 +135,16 @@ public class MainDatabase {
             }
             // once we're done, close everything
             sesh.close();
+        } else {
+            Main.LOGGER.info("Search is disabled. Not indexing");
         }
     }
 
+    /**
+     * searches the images table for an image. checks both filename and uploader comments columns
+     * @param terms the terms of which you want to search for
+     * @return list of items
+     */
     public List<Image> searchImages(String terms){
         // TODO: hibernate has wildcard things, escape them?
         // open a new session
