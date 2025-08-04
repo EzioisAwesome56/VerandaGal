@@ -58,6 +58,8 @@ public class SearchPageServlet extends HttpServlet {
         if (found_images.isEmpty()){
             // no search result where found, zamn
             page = page.replace("${GALCONTENT}", "Sorry, nothing was found");
+            // fix: remove the filtercount placeholder if nothing was found
+            page = page.replace("${FILT_COUNT}", "");
         } else {
             // setup the gallery view using an ItemPage object
             ItemPage itempage = new ItemPage(found_images);
