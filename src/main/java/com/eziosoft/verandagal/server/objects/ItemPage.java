@@ -9,6 +9,8 @@ import com.eziosoft.verandagal.server.utils.SessionUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ItemPage {
@@ -143,6 +145,7 @@ public class ItemPage {
         for (int i = 0; i < this.total_items; i++){
             this.item_ids[i] = items.get(i).getId();
         }
+        Arrays.sort(this.item_ids);
         // set the generated flag
         this.generated = true;
         // pretty much done now
