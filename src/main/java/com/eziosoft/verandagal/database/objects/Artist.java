@@ -13,7 +13,7 @@ public class Artist {
     private long id;
     @Column(name = "ArtistName", nullable = false)
     private String name;
-    @Column(name = "ArtistURLs", nullable = false)
+    @Column(name = "ArtistURLs", nullable = false, columnDefinition = "VARBINARY")
     private String[] urls;
     @Column(name = "Notes", nullable = false, columnDefinition = "TEXT")
     private String notes;
