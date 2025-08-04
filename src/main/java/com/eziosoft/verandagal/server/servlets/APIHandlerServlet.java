@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -102,6 +103,7 @@ public class APIHandlerServlet extends HttpServlet {
             // do we actually have to give a shit?
             switch (action_id){
                 case 1, 3, 5 -> {}
+                case 6 -> objid = 0;
                 default -> {
                     displayAPIHelp(req, resp);
                     return;
@@ -128,6 +130,9 @@ public class APIHandlerServlet extends HttpServlet {
             }
             case 5 -> {
                 doRandomImageRequest(req, resp);
+            }
+            case 6 -> {
+                doAllImagesAPIRequest(req, resp, objid);
             }
             default -> {
                 // assume incorrect/malformed api call
@@ -199,6 +204,43 @@ public class APIHandlerServlet extends HttpServlet {
         AsyncContext cxt = req.startAsync();
         ServletOutputStream out = resp.getOutputStream();
         out.setWriteListener(new BasicTextWriter(json, cxt, out));
+        return;
+    }
+
+    // TODO: make this customizable somehow
+    private static final long amount_of_images = 150;
+
+    /**
+     * serves the API endpoint for getting all images. uses pages to return a set amount
+     * of images per request
+     * @param req the http resuest
+     * @param resp the response object
+     * @param pageid the page number we are serving
+     * @throws IOException if something breaks during the process
+     */
+    private static void doAllImagesAPIRequest(HttpServletRequest req, HttpServletResponse resp, long pageid) throws IOException {
+        // set content type
+        resp.setContentType("application/json; charset=UTF-8");
+        // bounds checking
+        if (pageid < 0) pageid = 0;
+        // calculate the offset; we return 150 images per page for this endpoint
+        long start = pageid * amount_of_images;
+        // get our images
+        Long[] images;
+        // this try catch loop will catch errors and other weirdness
+        try {
+            images = VerandaServer.maindb.getSubsetOfAllImages(start, amount_of_images);
+            if (images.length < 1) throw new NullPointerException("no images!");
+        } catch (Exception e){
+            doError(req, resp, "No images returned for that page");
+            return;
+        }
+        // convert to json
+        String list = Main.gson_pretty.toJson(images);
+        // send that down the tube
+        AsyncContext cxt = req.startAsync();
+        ServletOutputStream out = resp.getOutputStream();
+        out.setWriteListener(new BasicTextWriter(list, cxt, out));
         return;
     }
 

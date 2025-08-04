@@ -86,6 +86,11 @@
     		<b>Requires oid:</b> no<br>
     		<b>Response format:</b> see format for Image Information Endpoint
     <hr>
+        	<h2>All Images Endpoint</h2>
+        	<b>Required aid value:</b> 6<br>
+        	<b>Requires oid:</b> Yes, but optional. OID is used to change pages of images<br>
+        	<b>Response format:</b> an array of image ids in json format
+    <hr>
         <h2>Search Endpoint</h2>
         <b>Required url:</b> /search<br>
         <b>Method:</b> POST<br>
