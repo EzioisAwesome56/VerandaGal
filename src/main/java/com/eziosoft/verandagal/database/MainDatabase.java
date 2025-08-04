@@ -1,9 +1,11 @@
 package com.eziosoft.verandagal.database;
 
 import com.eziosoft.verandagal.Main;
+import com.eziosoft.verandagal.database.objects.*;
 import com.eziosoft.verandagal.utils.ConfigFile;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.StatelessSession;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
@@ -15,9 +17,6 @@ import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tool.schema.Action;
-import com.eziosoft.verandagal.database.objects.Artist;
-import com.eziosoft.verandagal.database.objects.Image;
-import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.VerandaServer;
 
 import java.io.File;
@@ -112,6 +111,7 @@ public class MainDatabase {
         configuration.addAnnotatedClass(Image.class);
         configuration.addAnnotatedClass(ImagePack.class);
         configuration.addAnnotatedClass(Artist.class);
+        configuration.addAnnotatedClass(DbMeta.class);
 
         ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                 .applySettings(configuration.getProperties()).build();
@@ -180,6 +180,13 @@ public class MainDatabase {
     }
 
     /**
+     * closed the factory and therefore the connection to the database
+     */
+    public void CloseConnection(){
+        this.factory.close();
+    }
+
+    /**
      * updates an object in the database
      * @param obj the update you wish to update the db with
      */
@@ -191,6 +198,22 @@ public class MainDatabase {
         // merge the thing?
         sesh.merge(obj);
         // commit and yeet
+        act.commit();
+        sesh.close();
+    }
+
+    /**
+     * allows merging items that already ghave an ID set
+     * @param obj the object you want to merge into the database
+     */
+    public void MergeObject(Object obj){
+        // create session
+        StatelessSession sesh = this.factory.openStatelessSession();
+        // open a transaction
+        Transaction act = sesh.beginTransaction();
+        // we have to use merge instead of save
+        sesh.upsert(obj);
+        // commit and close it
         act.commit();
         sesh.close();
     }

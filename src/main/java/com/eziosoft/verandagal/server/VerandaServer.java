@@ -1,5 +1,6 @@
 package com.eziosoft.verandagal.server;
 
+import com.eziosoft.verandagal.database.migrations.DatabaseMigrations;
 import com.eziosoft.verandagal.server.objects.PackInfoManager;
 import com.eziosoft.verandagal.server.objects.TemplateManager;
 import com.eziosoft.verandagal.server.objects.VerandaGalHTTP;
@@ -61,6 +62,9 @@ public class VerandaServer {
         LOGGER.info("Now starting server...");
         // init the db
         maindb = new MainDatabase(configFile);
+        // check for migrations
+        DatabaseMigrations.checkVersion();
+        DatabaseMigrations.performMigrations(configFile);
         // init the other db, too
         thumbnails = new ThumbnailStore(configFile);
         // init the cachers for various things

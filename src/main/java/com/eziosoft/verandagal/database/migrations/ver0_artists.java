@@ -1,33 +1,22 @@
-package com.eziosoft.verandagal.database.objects;
+package com.eziosoft.verandagal.database.migrations;
 
 import jakarta.persistence.*;
 
 @Entity
 @Table(name="Artists", uniqueConstraints = {@UniqueConstraint(columnNames = {"ID"})})
-public class Artist {
+public class ver0_artists {
 
-    // define all attributes for what needs to go in the table
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID", nullable = false, unique = true)
     private long id;
     @Column(name = "ArtistName", nullable = false)
     private String name;
-    @Column(name = "ArtistURLs", nullable = false)
-    private String[] urls;
+    @Column(name = "ArtistURLs", nullable = false, columnDefinition = "VARBINARY")
+    private byte[] urls;
     @Column(name = "Notes", nullable = false, columnDefinition = "TEXT")
     private String notes;
 
-    // getters and setters for the object
-    public void setName(String name) {
-        this.name = name;
-    }
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-    public void setUrls(String[] urls) {
-        this.urls = urls;
-    }
     public String getName() {
         return name;
     }
@@ -37,10 +26,7 @@ public class Artist {
     public String getNotes() {
         return notes;
     }
-    public String[] getUrls() {
+    public byte[] getUrls() {
         return urls;
-    }
-    public void setId(long id) {
-        this.id = id;
     }
 }
