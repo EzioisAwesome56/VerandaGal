@@ -75,7 +75,7 @@ public class ViewAllBrowseServlet extends HttpServlet {
         // should we show the navigation?
         HttpSession sesseion = req.getSession();
         SessionObject sesh = SessionUtils.getSessionDetails(sesseion);
-        if (sesh.isUse_pagination()){
+        if (sesh.isUse_pagination() || force_pagination){
             // load and build it
             String nav = VerandaServer.template.getTemplate("navigation");
             // do some dirty hacks to reuse old code for this task

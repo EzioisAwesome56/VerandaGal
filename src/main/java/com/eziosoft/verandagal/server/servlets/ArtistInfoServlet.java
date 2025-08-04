@@ -96,7 +96,7 @@ public class ArtistInfoServlet extends HttpServlet {
         // do we need to do pagination
         // we need the session to find out
         SessionObject sesh = SessionUtils.getSessionDetails(req.getSession());
-        if (sesh.isUse_pagination()){
+        if (sesh.isUse_pagination() || force_pagination){
             String oof = VerandaServer.template.getTemplate("navigation");
             if (pageno == -1) pageno = 0;
             oof = oof.replace("${SIMPLENAV}", ServerUtils.buildNavigation(pageitem, pageno, "/artist/?id=" + artist.getId()));

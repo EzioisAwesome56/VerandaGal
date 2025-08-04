@@ -90,7 +90,7 @@ public class GalleryBrowseServlet extends HttpServlet {
         // should we show the navigation?
         HttpSession sesseion = req.getSession();
         SessionObject sesh = SessionUtils.getSessionDetails(sesseion);
-        if (sesh.isUse_pagination()){
+        if (sesh.isUse_pagination() || force_pagination){
             // load and build it
             String nav = VerandaServer.template.getTemplate("navigation");
             // by now we dont need the -1 in logic, so we can just fix it
