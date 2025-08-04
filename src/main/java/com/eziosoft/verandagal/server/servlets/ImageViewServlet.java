@@ -130,7 +130,7 @@ public class ImageViewServlet extends HttpServlet {
             imgview = imgview.replace("${DATE}", ourimage.getUploaddate());
             imgview = imgview.replace("${NOTES}", ourimage.getUploaderComments());
             // moved addpath to the top of the file
-            imgview = imgview.replaceAll("\\$\\{IMGURL}", addpath + ourimage.getFilename());
+            imgview = imgview.replace("${IMGURL}", addpath + ourimage.getFilename());
             imgview = imgview.replace("${IMGRES}", ourimage.getImageres());
             // new feature: bottom navigation on image view page
             if (ourimage.getId() - 1 < 1){
