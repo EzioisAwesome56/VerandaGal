@@ -63,7 +63,6 @@ public class ThumbnailStore {
 
     /**
      * use this to save a thumbnail that already has an ID attached to its object
-     * FIXME: oh my god somebody pelase make this work
      * @param obj thumbnail with manually set ID
      */
     public void MergeThumbnail(Thumbnail obj){
@@ -78,13 +77,18 @@ public class ThumbnailStore {
         sesh.close();
     }
 
+    /**
+     * loads a thumbnail from the db based on its id
+     * @param id id of thumbnail to load
+     * @return the thumbnail you requested
+     */
     public Thumbnail LoadThumbnail(long id){
         // make a session
         Session sesh = this.factory.openSession();
         // and make a transaction
         Transaction act = sesh.beginTransaction();
         // get our thing
-        Thumbnail obj = sesh.get(Thumbnail.class, id);
+        Thumbnail obj = sesh.find(Thumbnail.class, id);
         act.commit();
         if (obj == null){
             // we didnt find anything, so return it

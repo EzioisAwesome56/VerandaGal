@@ -113,25 +113,4 @@ public class Image {
         this.uploaderComments = uploaderComments;
     }
     public void setAI(boolean AI) { this.isAI = AI; }
-
-    // static functions that are unrelated to the object in question
-    /*
-        I found out i was using hibernate wrongish
-        you should instead use MainDatabase.LoadObject instead. It is extremely simple to use
-     */
-    @Deprecated
-    public static Image getImageByID(long id, Session session) throws NullPointerException{
-        Transaction act = session.beginTransaction();
-        Query q = session.createQuery("from " + Image.class.getName() + " where ID = :id");
-        q.setParameter("id", id);
-        // get the size of the returned results
-        int size = q.getResultList().size();
-        // commit it
-        act.commit();
-        if (size < 1){
-            throw new NullPointerException("Image not found with that id!");
-        } else {
-            return (Image) q.uniqueResult();
-        }
-    }
 }

@@ -9,7 +9,6 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
-import org.hibernate.search.engine.search.common.ValueModel;
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
@@ -50,7 +49,7 @@ public class MainDatabase {
         this.useSearch = config.isEnable_search();
         // DONT FORGET TO INIT THE FACTORY DUMBASS
         this.initSessionFactory();
-        this.doInitialIndex(config);
+        this.doInitialIndex();
     }
 
     public void close(){
@@ -120,8 +119,9 @@ public class MainDatabase {
         this.factory = configuration.buildSessionFactory(serviceRegistry);
     }
 
-    private void doInitialIndex(ConfigFile conf){
+    private void doInitialIndex(){
         if (this.useSearch){
+            Main.LOGGER.info("Running initial hibernate search index");
             // get a session
             Session sesh = this.factory.openSession();
             // make it into a search session
@@ -179,6 +179,10 @@ public class MainDatabase {
         //return id;
     }
 
+    /**
+     * updates an object in the database
+     * @param obj the update you wish to update the db with
+     */
     public void UpdateObject(Object obj){
         // get a session
         Session sesh = this.factory.openSession();
@@ -191,13 +195,20 @@ public class MainDatabase {
         sesh.close();
     }
 
+    /**
+     * loads an object from the database based on id
+     * @param type the object type to load
+     * @param id id of type to get
+     * @return the object you want, or null
+     * @param <T> whatever you want to return as
+     */
     public <T> T LoadObject(Class<T> type, long id){
         // make a session
         Session sesh = this.factory.openSession();
         // and make a transaction
         Transaction act = sesh.beginTransaction();
         // get our thing
-        Object obj = sesh.get(type, id);
+        Object obj = sesh.find(type, id);
         act.commit();
         if (obj == null){
             // we didnt find anything, so return it
@@ -209,19 +220,24 @@ public class MainDatabase {
         return (T) obj;
     }
 
+    /**
+     * gets how many records of a certian type there are in a database
+     * @param type class of the type you want to find out how many are present
+     * @return number of records, or -1 if something breaks
+     */
     public long getCountOfRecords(Class<?> type){
         // get a session
         Session sesh = this.factory.openSession();
         // open a transaction
         Transaction act = sesh.beginTransaction();
-        Query q = sesh.createQuery("select count(*) from " + type.getName());
+        Query<Long> q = sesh.createQuery("select count(*) from " + type.getName(), Long.class);
         // get the size of the returned results
         int size = q.getResultList().size();
         // commit it
         act.commit();
         // apparently we cant read from q if the session is closed
         // so we will instead do that now
-        long result = (Long) q.uniqueResult();
+        long result = q.uniqueResult();
         // clean up
         sesh.close();
         if (size < 1){
@@ -241,12 +257,12 @@ public class MainDatabase {
         Session sesh = this.factory.openSession();
         // open a transaction
         Transaction act = sesh.beginTransaction();
-        Query<Long> q = sesh.createQuery("select count(*) from " + Image.class.getName() + " where packid=:pid");
+        Query<Long> q = sesh.createQuery("select count(*) from " + Image.class.getName() + " where packid=:pid", Long.class);
         q.setParameter("pid", packid);
         // clean up a little
         act.commit();
         // get our result
-        long result = (Long) q.uniqueResult();
+        long result = q.uniqueResult();
         // clean up
         sesh.close();
         if (result <= 0){
@@ -256,13 +272,18 @@ public class MainDatabase {
         }
     }
 
+    /**
+     * gets every image in an imagepack
+     * @param packid what pack to pull images from
+     * @return all image ids in this pack, or null if something broke
+     */
     public Long[] getAllImagesInPack(long packid){
         // get a session
         Session sesh = this.factory.openSession();
         // open a transaction as well
         Transaction act = sesh.beginTransaction();
         // query for what we want
-        Query q = sesh.createQuery("select ID from " + Image.class.getName() + " where packid=:pid");
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName() + " where packid=:pid", Long.class);
         q.setParameter("pid", packid);
         // how many are there
         List<Long> images = q.getResultList();
@@ -293,7 +314,7 @@ public class MainDatabase {
         Session sesh = this.factory.openSession();
         Transaction act = sesh.beginTransaction();
         // write a query for what we want
-        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName() + " where packid=:pid");
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName() + " where packid=:pid", Long.class);
         q.setParameter("pid", packid);
         // append bounds information
         q.setFirstResult(start);
@@ -313,12 +334,18 @@ public class MainDatabase {
         }
     }
 
+    /**
+     * gets a subset of all images in the db based on provided values
+     * @param start starting index of images
+     * @param amount how many you want
+     * @return array of imageids
+     */
     public Long[] getSubsetOfAllImages(long start, long amount){
         // get a connection to the database
         Session sesh = this.factory.openSession();
         Transaction act = sesh.beginTransaction();
         // write the query to get all images
-        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName());
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName(), Long.class);
         // setup bounds information
         // TODO: why is this argument just an int? shouldnt it be a long?
         q.setFirstResult(Math.toIntExact(start));
@@ -341,7 +368,7 @@ public class MainDatabase {
         Session sesh = this.factory.openSession();
         Transaction act = sesh.beginTransaction();
         // make the query
-        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName());
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName(), Long.class);
         // get our stuff
         List<Long> images = q.getResultList();
         // commit and close
@@ -363,7 +390,7 @@ public class MainDatabase {
         // open a transaction as well
         Transaction act = sesh.beginTransaction();
         // query for what we want
-        Query q = sesh.createQuery("select ID from " + Image.class.getName() + " where artistid=:aid");
+        Query q = sesh.createQuery("select ID from " + Image.class.getName() + " where artistid=:aid", Long.class);
         q.setParameter("aid", artistid);
         // how many are there
         List<Long> images = q.getResultList();
@@ -394,7 +421,7 @@ public class MainDatabase {
         Session sesh = this.factory.openSession();
         Transaction act = sesh.beginTransaction();
         // write a query for what we want
-        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName() + " where artistid=:aid");
+        Query<Long> q = sesh.createQuery("select ID from " + Image.class.getName() + " where artistid=:aid", Long.class);
         q.setParameter("aid", artistid);
         // append bounds information
         q.setFirstResult(start);
@@ -424,7 +451,7 @@ public class MainDatabase {
         Session sesh = this.factory.openSession();
         // open a transaction
         Transaction act = sesh.beginTransaction();
-        Query<Long> q = sesh.createQuery("select count(*) from " + Image.class.getName() + " where artistid=:aid");
+        Query<Long> q = sesh.createQuery("select count(*) from " + Image.class.getName() + " where artistid=:aid", Long.class);
         q.setParameter("aid", artid);
         // clean up a little
         act.commit();
