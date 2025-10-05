@@ -497,6 +497,11 @@ public class APIHandlerServlet extends HttpServlet {
         apiresp.addURL(addpath + img.getFilename());
         // also append the thumbnail url
         apiresp.addURL("/thumb/?id=" + img.getId());
+        // should we append the preview?
+        if (!VerandaServer.configFile.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(img.getFilename())){
+            apiresp.addURL("/preview/?id=" + img.getId());
+            apiresp.enable_preview();
+        }
         // then we can send this object to the user
         String json = Main.gson_pretty.toJson(apiresp);
         AsyncContext cxt = req.startAsync();
