@@ -5,10 +5,7 @@ import com.eziosoft.verandagal.database.objects.Artist;
 import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
 import com.eziosoft.verandagal.server.VerandaServer;
-import com.eziosoft.verandagal.server.objects.ArtistAPIResponse;
-import com.eziosoft.verandagal.server.objects.ImageAPIResponse;
-import com.eziosoft.verandagal.server.objects.ImageSearchAPIResponse;
-import com.eziosoft.verandagal.server.objects.PackAPIResponse;
+import com.eziosoft.verandagal.server.objects.*;
 import com.eziosoft.verandagal.server.utils.BasicTextWriter;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
@@ -110,6 +107,21 @@ public class APIHandlerServlet extends HttpServlet {
                 }
             }
         }
+        // new: parse for item amounts options
+        int item_amount = -1;
+        try {
+            item_amount = Integer.parseInt(req.getParameter("num"));
+        } catch (Exception e){
+            // do we need to do anything?
+            switch (action_id){
+                case 1, 2, 3, 4, 5 -> {}
+                case 6 -> item_amount = 0;
+                default -> {
+                    displayAPIHelp(req, resp);
+                    return;
+                }
+            }
+        }
         // check to see if the action id is valid or not
         switch (action_id){
             case 0 -> {
@@ -132,7 +144,7 @@ public class APIHandlerServlet extends HttpServlet {
                 doRandomImageRequest(req, resp);
             }
             case 6 -> {
-                doAllImagesAPIRequest(req, resp, objid);
+                doAllImagesAPIRequest(req, resp, objid, item_amount);
             }
             default -> {
                 // assume incorrect/malformed api call
@@ -207,9 +219,6 @@ public class APIHandlerServlet extends HttpServlet {
         return;
     }
 
-    // TODO: make this customizable somehow
-    private static final long amount_of_images = 150;
-
     /**
      * serves the API endpoint for getting all images. uses pages to return a set amount
      * of images per request
@@ -218,7 +227,15 @@ public class APIHandlerServlet extends HttpServlet {
      * @param pageid the page number we are serving
      * @throws IOException if something breaks during the process
      */
-    private static void doAllImagesAPIRequest(HttpServletRequest req, HttpServletResponse resp, long pageid) throws IOException {
+    private static void doAllImagesAPIRequest(HttpServletRequest req, HttpServletResponse resp, long pageid, int item_amounts) throws IOException {
+        // setup the amount of images
+        long amount_of_images = 0;
+        switch (item_amounts){
+            case 0 -> amount_of_images = 150;
+            case 1 -> amount_of_images = 300;
+            case 2 -> amount_of_images = 450;
+            default -> amount_of_images = 150;
+        }
         // set content type
         resp.setContentType("application/json; charset=UTF-8");
         // bounds checking
@@ -235,8 +252,13 @@ public class APIHandlerServlet extends HttpServlet {
             doError(req, resp, "No images returned for that page");
             return;
         }
+        // calculate the maximum number of pages
+        long record_count = VerandaServer.maindb.getCountOfRecords(Image.class);
+        long max_page = Math.ceilDiv(record_count, amount_of_images);
+        // make new object to hold the response in
+        AllImagesAPIResponse payload = new AllImagesAPIResponse(images, pageid, max_page);
         // convert to json
-        String list = Main.gson_pretty.toJson(images);
+        String list = Main.gson_pretty.toJson(payload);
         // send that down the tube
         AsyncContext cxt = req.startAsync();
         ServletOutputStream out = resp.getOutputStream();

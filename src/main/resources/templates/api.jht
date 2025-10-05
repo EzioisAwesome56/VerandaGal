@@ -89,7 +89,13 @@
         	<h2>All Images Endpoint</h2>
         	<b>Required aid value:</b> 6<br>
         	<b>Requires oid:</b> Yes, but optional. OID is used to change pages of images<br>
-        	<b>Response format:</b> an array of image ids in json format
+        	<b>num parameter:</b> sets how many items per page to return. 0 -> 150, 1 -> 300, 2 -> 450<br>
+        	<b>Response format:</b><br>
+        	<ul>
+        	    <li><b>"images" json field:</b> array of all image ids returned for this page</li>
+        	    <li><b>"page_number" json field:</b> the current page number</li>
+        	    <li><b>"max_page" json field:</b> the final page number that is accessible</li>
+        	</ul>
     <hr>
         <h2>Search Endpoint</h2>
         <b>Required url:</b> /search<br>
