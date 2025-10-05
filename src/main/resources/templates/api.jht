@@ -27,7 +27,8 @@
             </ul>
         </li>
         <li>
-			<b>"urls" json field:</b> an array of urls, should only contain two. First one is the url to the actual image, second one is a url to its thumbnail
+			<b>"urls" json field:</b> an array of urls, should only contain two. First one is the url to the actual image, second one is a url to its thumbnail<br>
+			optionally, a third url may be included for the preview of the image. you can check the "has_preview" field to see if one is present or not
 		</li>
 	  </ul>
 	  <hr>

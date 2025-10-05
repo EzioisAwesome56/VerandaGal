@@ -7,10 +7,13 @@ import java.util.ArrayList;
 public class ImageAPIResponse {
     private Image img;
     private ArrayList<String> urls;
+    private boolean has_preview;
 
     public ImageAPIResponse(){
         // init the urls
         this.urls = new ArrayList<>();
+        // default value
+        this.has_preview = false;
     }
 
     public Image getImg() {
@@ -22,5 +25,8 @@ public class ImageAPIResponse {
     }
     public void addURL(String url){
         this.urls.add(url);
+    }
+    public void enable_preview(){
+        this.has_preview = true;
     }
 }

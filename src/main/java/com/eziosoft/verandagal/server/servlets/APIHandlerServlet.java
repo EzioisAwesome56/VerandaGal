@@ -1,6 +1,7 @@
 package com.eziosoft.verandagal.server.servlets;
 
 import com.eziosoft.verandagal.Main;
+import com.eziosoft.verandagal.client.utils.ImageUtils;
 import com.eziosoft.verandagal.database.objects.Artist;
 import com.eziosoft.verandagal.database.objects.Image;
 import com.eziosoft.verandagal.database.objects.ImagePack;
@@ -114,7 +115,7 @@ public class APIHandlerServlet extends HttpServlet {
         } catch (Exception e){
             // do we need to do anything?
             switch (action_id){
-                case 1, 2, 3, 4, 5 -> {}
+                case 0, 1, 2, 3, 4, 5 -> {}
                 case 6 -> item_amount = 0;
                 default -> {
                     displayAPIHelp(req, resp);
@@ -211,6 +212,11 @@ public class APIHandlerServlet extends HttpServlet {
         apiresp.addURL(addpath + theimage.getFilename());
         // also append the thumbnail url
         apiresp.addURL("/thumb/?id=" + theimage.getId());
+        // should we append the preview?
+        if (!VerandaServer.configFile.isDontUsePreviews() || ImageUtils.checkIfFormatRequiresPreview(theimage.getFilename())){
+            apiresp.addURL("/preview/?id=" + theimage.getId());
+            apiresp.enable_preview();
+        }
         // then we can send this object to the user
         String json = Main.gson_pretty.toJson(apiresp);
         AsyncContext cxt = req.startAsync();
